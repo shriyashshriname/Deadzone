@@ -12,20 +12,10 @@ namespace Deadzone.Editor
         [InitializeOnLoadMethod]
         public static void EnsureScriptingDefines()
         {
-            EnsureDefineForTarget(UnityEditor.Build.NamedBuildTarget.Standalone);
-            EnsureDefineForTarget(UnityEditor.Build.NamedBuildTarget.Android);
         }
 
         private static void EnsureDefineForTarget(UnityEditor.Build.NamedBuildTarget target)
         {
-            string defines = PlayerSettings.GetScriptingDefineSymbols(target);
-            if (!defines.Contains("ENABLE_UNITY_COLLECTIONS_CHECKS"))
-            {
-                string newDefines = string.IsNullOrEmpty(defines)
-                    ? "ENABLE_UNITY_COLLECTIONS_CHECKS"
-                    : defines + ";ENABLE_UNITY_COLLECTIONS_CHECKS";
-                PlayerSettings.SetScriptingDefineSymbols(target, newDefines);
-            }
         }
 
         [MenuItem("Deadzone/Build/Windows (x64)")]
@@ -59,6 +49,25 @@ namespace Deadzone.Editor
             string buildPath = "Builds/Android/Deadzone.apk";
             string dir = System.IO.Path.GetDirectoryName(buildPath);
             if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+
+            string sdkPath = "E:/Unity/Hub/Editor/6000.6.9f1/Editor/Data/PlaybackEngines/AndroidPlayer/SDK";
+            string jdkPath = "E:/Unity/Hub/Editor/6000.6.9f1/Editor/Data/PlaybackEngines/AndroidPlayer/OpenJDK";
+            string ndkPath = "E:/Unity/Hub/Editor/6000.6.9f1/Editor/Data/PlaybackEngines/AndroidPlayer/NDK";
+            if (System.IO.Directory.Exists(sdkPath))
+            {
+                EditorPrefs.SetBool("SdkUseEmbedded", true);
+                EditorPrefs.SetString("AndroidSdkRoot", sdkPath);
+            }
+            if (System.IO.Directory.Exists(jdkPath))
+            {
+                EditorPrefs.SetBool("JdkUseEmbedded", true);
+                EditorPrefs.SetString("JdkPath", jdkPath);
+            }
+            if (System.IO.Directory.Exists(ndkPath))
+            {
+                EditorPrefs.SetBool("NdkUseEmbedded", true);
+                EditorPrefs.SetString("AndroidNdkRoot", ndkPath);
+            }
 
             EditorUserBuildSettings.buildAppBundle = false;
 
