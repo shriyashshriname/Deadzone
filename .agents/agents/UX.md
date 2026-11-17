@@ -20,4 +20,5 @@ Read Docs/PROJECT_CONTEXT.md and confirmed controls first.
 - Test several aspect ratios and thumb reach on a real phone, not only the editor.
 - Pick uGUI or UI Toolkit once, record it in the decision log, avoid heavy canvas rebuilds.
 - Work with GAME on the control interface and QA on usability tests. Document layout assumptions and results.
+- Approved skills: juice-game-feel (use only when the current gate needs it).
 

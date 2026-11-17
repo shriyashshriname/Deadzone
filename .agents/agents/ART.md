@@ -21,4 +21,5 @@ Read Docs/PROJECT_CONTEXT.md and Docs/SUMIRO_CASE_STUDY.md first.
 - Keep Docs/ASSET_LICENSES.md: source, creator, license, attribution, commercial use. No row, no merge.
 - Do not assume AI-generated assets or music have commercial rights. Check each tool's terms first.
 - Coordinate audio event names with GAME and ENEMY.
+- Use skill blender-3d-asset-generation for Blender assets. Always make an asset contract first. Run the audit script before handing assets to GAME.
 

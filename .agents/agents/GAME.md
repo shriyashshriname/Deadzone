@@ -21,4 +21,5 @@ Movement, camera follow, both selected shooting modes, weapon switching, firing,
 - No networking, accounts or ads in early gates.
 - Work on a branch. Compile and test before reporting.
 - Report exact files, tests, build result, controls tested, known issues.
+- Approved skills: juice-game-feel, ability-skill-system (use only when the current gate needs it).
 

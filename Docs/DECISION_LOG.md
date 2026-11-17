@@ -25,6 +25,7 @@
 | D-021 | 2026-11-17 | Procedural synthesizer audio system for gunfire, reloads, sirens, and impacts | Proposed |
 | D-022 | 2026-11-17 | Render pipeline selection: Built-in Standard vs Universal Render Pipeline (URP) migration | Proposed |
 | D-023 | 2026-11-17 | Engine Track Migration: 6000.6.9f1 is Tech Stream / Staging (branch 6000.6/staging), not an LTS release. Propose migrating to official Unity 6 LTS (6000.0.x LTS) before production release | Proposed |
+| D-024 | 2026-11-17 | Install vetted skills (blender-3d-asset-generation from lovecatisgood-sudo/00221bb, juice-game-feel & ability-skill-system from nlelouche/1a70cd4); candidate C deferred | Confirmed |
 
 ## Still open
 Exact art style. Match duration and player count for multiplayer. Networking framework and backend. Final title and trademark clearance.

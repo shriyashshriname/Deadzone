@@ -3,6 +3,9 @@
 - Gate 5 Mobile Android Export & APK Packaging
 
 ## Done
+- T-130 | NOVA | Vet and install AGY skills (blender-3d-asset-generation, juice-game-feel, ability-skill-system)
+- T-129 | UX | Streamline mobile controls: anchor fixed corner joysticks, suspend touch on menus, remove redundant fire button
+- T-128 | UX | Dedicated Mobile UI view toggle, remove PC keyboard badges, mobile pause & shop badges
 - T-125 | GAME | Land Tactical Field Upgrade Terminal [B] & live stat perk scaling
 - T-126 | GAME | Land Extraction Zone evac beacon, 5s hold timer, and Victory extraction debrief
 - T-127 | SHIP | Standalone Windows x64 Phase 5 Vertical Slice SUCCEEDED (99.9 MB)

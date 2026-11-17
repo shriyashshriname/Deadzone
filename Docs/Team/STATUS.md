@@ -1,12 +1,11 @@
 # STATUS (NOVA rewrites each loop, max 40 lines)
-Phase: Task 2 Complete | Safety Net, URP Migration, NavMesh AI, Gate 0 Docs, Android APK Generated
+Phase: Mobile Controls Fixed & AGY Skills Vetted & Installed (Gate 0 Docs & Skills Setup Complete)
 Engine: Unity 6000.6.9f1 (Tech Stream / Staging) on E: drive
-Git: Initialized, baseline-1 tagged, branch feature/urp merged, clean per-task commits
-Pipeline: Universal Render Pipeline (URP) Mobile Asset active, SRP Batcher enabled, 25 materials converted to URP/Lit
-AI Navigation: NavMesh baked for Graybox_Sandbox, NavMeshAgent wired, staggered pathing, 35 active enemy cap
-Combat & Polish: HitFlash dual-property support (_BaseColor & _Color), muzzle flash light pooling capped at 1
+Git: Clean per-task commits (da0850f: anchored joysticks & suspended menu inputs)
+Controls: Twin-stick fixed bottom corners, Mode A auto-fire on aim deflection >= 20%, touch suspended when HUD menus open
+Mobile UI: Dedicated clean mobile HUD (no keyboard brackets, touchable cards, corner touch radii)
+Skills Installed: 3 approved skills (.agents/skills/blender-3d-asset-generation, juice-game-feel, ability-skill-system)
+Blender Status: Not yet installed on host PC; detailed install guide logged in Docs/Team/HUMAN_TODO.md
 Verification Suite: 14/14 Smoke Playtests PASSED | 10/10 Real Behavior Tests PASSED (100% Success)
 Android Build: Builds/Android/Deadzone.apk generated successfully (42.5 MB, Exit Code 0)
-Toolchain Deployed: OpenJDK 17, Android SDK Platform 34, Build-Tools 36.0.0, CMake 3.22.1, NDK r27c
-Blocked Items: None. Ready for Founder phone smoke test.
-Next: Founder installs Deadzone.apk on Android phone via adb, tests dual-stick touch controls and frame rate.
+Next Action: Founder installs Deadzone.apk on device or runs Playmode in Unity Editor to verify new anchored mobile touch controls.
