@@ -59,11 +59,14 @@ namespace Deadzone.Core
         private void Update()
         {
             if (currentRun == null) return;
+        }
 
-            // Track peak noise
-            if (NoiseManager.Instance != null && NoiseManager.Instance.CurrentNoiseLevel > currentRun.peakNoiseLevel)
+        public void RecordNoiseGenerated(float radius)
+        {
+            if (currentRun == null) return;
+            if (radius > currentRun.peakNoiseLevel)
             {
-                currentRun.peakNoiseLevel = NoiseManager.Instance.CurrentNoiseLevel;
+                currentRun.peakNoiseLevel = radius;
             }
         }
 

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Deadzone.Player;
+using Deadzone.Core;
 
 namespace Deadzone.Enemies
 {
@@ -34,6 +35,11 @@ namespace Deadzone.Enemies
 
         public void AlertEnemiesInRadius(Vector3 origin, float radius)
         {
+            if (RunTelemetryLogger.Instance != null)
+            {
+                RunTelemetryLogger.Instance.RecordNoiseGenerated(radius);
+            }
+
             float radiusSqr = radius * radius;
             for (int i = 0; i < registeredEnemies.Count; i++)
             {

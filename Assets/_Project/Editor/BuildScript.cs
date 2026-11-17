@@ -9,6 +9,25 @@ namespace Deadzone.Editor
     {
         private static readonly string[] Scenes = { "Assets/_Project/Scenes/Graybox_Sandbox.unity" };
 
+        [InitializeOnLoadMethod]
+        public static void EnsureScriptingDefines()
+        {
+            EnsureDefineForTarget(UnityEditor.Build.NamedBuildTarget.Standalone);
+            EnsureDefineForTarget(UnityEditor.Build.NamedBuildTarget.Android);
+        }
+
+        private static void EnsureDefineForTarget(UnityEditor.Build.NamedBuildTarget target)
+        {
+            string defines = PlayerSettings.GetScriptingDefineSymbols(target);
+            if (!defines.Contains("ENABLE_UNITY_COLLECTIONS_CHECKS"))
+            {
+                string newDefines = string.IsNullOrEmpty(defines)
+                    ? "ENABLE_UNITY_COLLECTIONS_CHECKS"
+                    : defines + ";ENABLE_UNITY_COLLECTIONS_CHECKS";
+                PlayerSettings.SetScriptingDefineSymbols(target, newDefines);
+            }
+        }
+
         [MenuItem("Deadzone/Build/Windows (x64)")]
         public static void BuildWindows()
         {
@@ -57,6 +76,10 @@ namespace Deadzone.Editor
             if (summary.result == BuildResult.Succeeded)
             {
                 Debug.Log($"[BuildScript] Android APK Succeeded: {summary.totalSize / (1024 * 1024)} MB");
+                foreach (var f in report.GetFiles())
+                {
+                    Debug.Log($"[BuildFile] {f.path} ({f.role}, {f.size} bytes)");
+                }
             }
             else
             {
