@@ -27,7 +27,15 @@ namespace Deadzone.Core
 
         private void Awake()
         {
-            if (Instance == null) Instance = this;
+            if (Instance == null)
+            {
+                Instance = this;
+                if (AtmosphereController.Instance == null)
+                {
+                    GameObject atmo = new GameObject("AtmosphereController");
+                    atmo.AddComponent<AtmosphereController>();
+                }
+            }
             else Destroy(gameObject);
         }
 
