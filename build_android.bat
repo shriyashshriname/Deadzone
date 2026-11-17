@@ -1,0 +1,1 @@
+"E:\Unity\Hub\Editor\6000.6.9f1\Editor\Unity.exe" -batchmode -nographics -quit -projectPath "E:\gamedev\Project Deadzone\Deadzone_Game" -executeMethod Deadzone.Editor.BuildScript.BuildAndroid -logFile "E:\gamedev\Project Deadzone\Deadzone_Game\build_android.log"
