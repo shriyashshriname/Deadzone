@@ -24,6 +24,7 @@
 | D-020 | 2026-11-17 | 120m arena layout with 4 tactical industrial sectors and 7-wave escalating structure | Proposed |
 | D-021 | 2026-11-17 | Procedural synthesizer audio system for gunfire, reloads, sirens, and impacts | Proposed |
 | D-022 | 2026-11-17 | Render pipeline selection: Built-in Standard vs Universal Render Pipeline (URP) migration | Proposed |
+| D-023 | 2026-11-17 | Engine Track Migration: 6000.6.9f1 is Tech Stream / Staging (branch 6000.6/staging), not an LTS release. Propose migrating to official Unity 6 LTS (6000.0.x LTS) before production release | Proposed |
 
 ## Still open
 Exact art style. Match duration and player count for multiplayer. Networking framework and backend. Final title and trademark clearance.
