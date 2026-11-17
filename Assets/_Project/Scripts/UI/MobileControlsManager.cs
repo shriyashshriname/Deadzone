@@ -1,199 +1,253 @@
 using UnityEngine;
-using UnityEngine.UI;
 using Deadzone.Player;
-using Deadzone.Combat;
-using Deadzone.Core;
 
 namespace Deadzone.UI
 {
     public class MobileControlsManager : MonoBehaviour
     {
-        [Header("Touch Joysticks")]
-        [SerializeField] private VirtualJoystick moveJoystick;
-        [SerializeField] private VirtualJoystick aimJoystick;
+        public static MobileControlsManager Instance { get; private set; }
+        public static bool ForceMobileInEditor { get; set; } = false;
+        public static bool IsMobileActive => Application.isMobilePlatform || ForceMobileInEditor;
 
-        [Header("Action Buttons")]
-        [SerializeField] private Button fireButton;
-        [SerializeField] private Button dashButton;
-        [SerializeField] private Button reloadButton;
-        [SerializeField] private Button swapWeaponButton;
-        [SerializeField] private Button contextInteractButton;
-
-        [Header("Settings & Shooting Modes (B4)")]
         [SerializeField] private TouchShootingMode shootingMode = TouchShootingMode.ModeA_PushToFire;
         [SerializeField] private bool enableAimAssist = true;
-        [SerializeField] private bool forceMobileUIInEditor = false;
 
         private PlayerController player;
         private MobileTouchInputProvider touchProvider;
-        private bool isContextHeld = false;
-        private float currentInteractionProgress = 0f;
-        private bool hasInteractableTarget = false;
+        private int moveFingerId = -1, aimFingerId = -1;
+        private Vector2 moveBasePos, moveKnobPos, aimBasePos, aimKnobPos;
+        private Vector2 defaultMoveBase, defaultAimBase;
+        private float moveRadius, aimRadius, btnRadius, fireRadius, contextRadius;
+        private Vector2 fireCenter, dashCenter, reloadCenter, swapCenter, grenadeCenter, turretCenter, contextCenter;
+        private Rect modeToggleRect;
+        private bool hasInteractableTarget, isFireHeld, isContextHeld;
+        private float currentInteractionProgress;
+        private string interactActionName = "USE";
 
         public TouchShootingMode CurrentMode => shootingMode;
 
-        private void Start()
+        private void Awake()
         {
-            bool isMobile = Application.isMobilePlatform || forceMobileUIInEditor;
-            gameObject.SetActive(isMobile);
+            if (Instance == null) Instance = this;
+            else if (Instance != this) { Destroy(gameObject); return; }
+            DontDestroyOnLoad(gameObject);
+        }
 
-            if (PlayerController.Instance != null)
+        public MobileTouchInputProvider GetOrCreateProvider(Transform playerTransform)
+        {
+            if (touchProvider == null)
             {
-                player = PlayerController.Instance;
-                touchProvider = new MobileTouchInputProvider(player.transform)
+                touchProvider = new MobileTouchInputProvider(playerTransform)
                 {
                     ShootingMode = shootingMode,
                     EnableAimAssist = enableAimAssist
                 };
-                player.SetInputProvider(touchProvider);
             }
+            return touchProvider;
+        }
 
-            if (dashButton != null) dashButton.onClick.AddListener(() => { if (touchProvider != null) touchProvider.DashTriggered = true; });
-            if (reloadButton != null) reloadButton.onClick.AddListener(() => { if (touchProvider != null) touchProvider.ReloadTriggered = true; });
-            if (swapWeaponButton != null) swapWeaponButton.onClick.AddListener(() => { if (touchProvider != null) touchProvider.SwitchWeaponTriggered = true; });
+        private void Start()
+        {
+            RecalculateLayout();
+            BindPlayer();
+        }
 
-            UpdateModeUI();
+        private void BindPlayer()
+        {
+            if (PlayerController.Instance != null)
+            {
+                player = PlayerController.Instance;
+                touchProvider = GetOrCreateProvider(player.transform);
+                if (IsMobileActive) player.SetInputProvider(touchProvider);
+            }
         }
 
         public void SetShootingMode(TouchShootingMode mode)
         {
             shootingMode = mode;
             if (touchProvider != null) touchProvider.ShootingMode = mode;
-            UpdateModeUI();
         }
 
-        private void UpdateModeUI()
+        private void RecalculateLayout()
         {
-            // In Mode B, explicit fire button is displayed
-            if (fireButton != null)
-            {
-                fireButton.gameObject.SetActive(shootingMode == TouchShootingMode.ModeB_AimAndFire);
-            }
+            float w = Screen.width, h = Screen.height;
+            moveRadius = h * 0.13f; aimRadius = h * 0.13f;
+            btnRadius = h * 0.052f; fireRadius = h * 0.076f; contextRadius = h * 0.065f;
+
+            defaultMoveBase = new Vector2(h * 0.26f, h * 0.74f);
+            defaultAimBase = new Vector2(w - h * 0.28f, h * 0.74f);
+            if (moveFingerId == -1) { moveBasePos = defaultMoveBase; moveKnobPos = defaultMoveBase; }
+            if (aimFingerId == -1) { aimBasePos = defaultAimBase; aimKnobPos = defaultAimBase; }
+
+            fireCenter = new Vector2(w - h * 0.48f, h * 0.68f);
+            dashCenter = new Vector2(w - h * 0.12f, h * 0.88f);
+            reloadCenter = new Vector2(w - h * 0.12f, h * 0.52f);
+            swapCenter = new Vector2(w - h * 0.25f, h * 0.42f);
+            grenadeCenter = new Vector2(w - h * 0.39f, h * 0.42f);
+            turretCenter = new Vector2(w - h * 0.53f, h * 0.46f);
+            contextCenter = new Vector2(w - h * 0.32f, h * 0.24f);
+            modeToggleRect = new Rect(w - 190f, 15f, 175f, 36f);
         }
 
         private void Update()
         {
-            if (player == null && PlayerController.Instance != null)
+            if (Input.GetKeyDown(KeyCode.F1))
             {
-                player = PlayerController.Instance;
-                touchProvider = new MobileTouchInputProvider(player.transform)
+                ForceMobileInEditor = !ForceMobileInEditor;
+                if (player != null)
                 {
-                    ShootingMode = shootingMode,
-                    EnableAimAssist = enableAimAssist
-                };
-                player.SetInputProvider(touchProvider);
+                    if (ForceMobileInEditor) player.SetInputProvider(touchProvider);
+                    else player.SetInputProvider(new DesktopInputProvider(player.transform));
+                }
             }
 
+            if (player == null && PlayerController.Instance != null) BindPlayer();
             if (touchProvider == null) return;
 
-            // Stream joystick values to provider
-            if (moveJoystick != null) touchProvider.MoveJoystickVector = moveJoystick.InputDirection;
-            if (aimJoystick != null)
+            RecalculateLayout();
+            hasInteractableTarget = MobileContextScanner.Poll(player, out currentInteractionProgress, out interactActionName);
+            ProcessTouchInput();
+        }
+
+        private void ProcessTouchInput()
+        {
+            if (Input.touchCount > 0)
             {
-                touchProvider.AimJoystickVector = aimJoystick.InputDirection;
-                touchProvider.IsAimPressed = aimJoystick.IsPressed;
+                bool fireHeld = false, ctxHeld = false;
+                for (int i = 0; i < Input.touchCount; i++)
+                {
+                    Touch t = Input.GetTouch(i);
+                    Vector2 p = new Vector2(t.position.x, Screen.height - t.position.y);
+                    if (t.phase == TouchPhase.Began) HandleTouchBegan(t.fingerId, p);
+                    else if (t.phase == TouchPhase.Moved || t.phase == TouchPhase.Stationary) HandleTouchMoved(t.fingerId, p);
+                    else if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled) HandleTouchEnded(t.fingerId);
+
+                    if (Vector2.Distance(p, fireCenter) <= fireRadius) fireHeld = true;
+                    if (hasInteractableTarget && Vector2.Distance(p, contextCenter) <= contextRadius) ctxHeld = true;
+                }
+                isFireHeld = fireHeld; isContextHeld = ctxHeld;
+            }
+            else if (ForceMobileInEditor)
+            {
+                ProcessMouseFallback();
             }
 
-            // Poll context interaction targets (B5)
-            PollContextInteraction();
+            touchProvider.FireButtonPressed = isFireHeld;
             touchProvider.ContextInteractHeld = isContextHeld;
         }
 
-        private void PollContextInteraction()
+        private void HandleTouchBegan(int fingerId, Vector2 p)
         {
-            hasInteractableTarget = false;
-            currentInteractionProgress = 0f;
+            if (modeToggleRect.Contains(p)) { SetShootingMode(shootingMode == TouchShootingMode.ModeA_PushToFire ? TouchShootingMode.ModeB_AimAndFire : TouchShootingMode.ModeA_PushToFire); return; }
+            if (Vector2.Distance(p, dashCenter) <= btnRadius) { touchProvider.DashTriggered = true; return; }
+            if (Vector2.Distance(p, reloadCenter) <= btnRadius) { touchProvider.ReloadTriggered = true; return; }
+            if (Vector2.Distance(p, swapCenter) <= btnRadius) { touchProvider.SwitchWeaponTriggered = true; return; }
+            if (Vector2.Distance(p, grenadeCenter) <= btnRadius) { touchProvider.GrenadeTriggered = true; return; }
+            if (Vector2.Distance(p, turretCenter) <= btnRadius) { touchProvider.TurretTriggered = true; return; }
+            if (hasInteractableTarget && Vector2.Distance(p, contextCenter) <= contextRadius) return;
+            if (Vector2.Distance(p, fireCenter) <= fireRadius) return;
 
-            if (player == null) return;
-
-            // 1. Check DBNO Revive
-            if (PlayerRevive.Instance != null && PlayerRevive.Instance.IsDowned)
+            if (p.x < Screen.width * 0.45f && p.y > Screen.height * 0.25f && moveFingerId == -1)
             {
-                hasInteractableTarget = true;
-                currentInteractionProgress = PlayerRevive.Instance.ReviveProgressRatio;
+                moveFingerId = fingerId; moveBasePos = p; moveKnobPos = p;
+                touchProvider.MoveJoystickVector = Vector2.zero;
             }
-
-            // 2. Check Power Substations
-            if (!hasInteractableTarget)
+            else if (p.x >= Screen.width * 0.45f && p.y > Screen.height * 0.30f && aimFingerId == -1)
             {
-                var stations = FindObjectsByType<PowerSubstation>(FindObjectsSortMode.None);
-                for (int i = 0; i < stations.Length; i++)
-                {
-                    if (stations[i].IsPlayerInRange && !stations[i].IsOnline)
-                    {
-                        hasInteractableTarget = true;
-                        currentInteractionProgress = stations[i].RebootProgressRatio;
-                        break;
-                    }
-                }
-            }
-
-            // 3. Check Supply Airdrops
-            if (!hasInteractableTarget)
-            {
-                var airdrops = FindObjectsByType<SupplyAirdrop>(FindObjectsSortMode.None);
-                for (int i = 0; i < airdrops.Length; i++)
-                {
-                    if (airdrops[i].IsPlayerInRange && !airdrops[i].IsClaimed)
-                    {
-                        hasInteractableTarget = true;
-                        currentInteractionProgress = airdrops[i].HoldProgressRatio;
-                        break;
-                    }
-                }
-            }
-
-            // 4. Check Extraction Zone
-            if (!hasInteractableTarget && ExtractionZone.Instance != null && ExtractionZone.Instance.IsActive)
-            {
-                if (ExtractionZone.Instance.IsPlayerInside && !ExtractionZone.Instance.IsExtracted)
-                {
-                    hasInteractableTarget = true;
-                    currentInteractionProgress = Mathf.Clamp01(ExtractionZone.Instance.CurrentHoldTime / ExtractionZone.Instance.RequiredHoldTime);
-                }
-            }
-
-            if (contextInteractButton != null)
-            {
-                contextInteractButton.gameObject.SetActive(hasInteractableTarget);
+                aimFingerId = fingerId; aimBasePos = p; aimKnobPos = p;
+                touchProvider.AimJoystickVector = Vector2.zero; touchProvider.IsAimPressed = true;
             }
         }
 
-        // GUI Fallback for Context Interact Button with Progress Ring (B5)
+        private void HandleTouchMoved(int fingerId, Vector2 p)
+        {
+            if (fingerId == moveFingerId)
+            {
+                Vector2 d = p - moveBasePos;
+                if (d.magnitude > moveRadius) d = d.normalized * moveRadius;
+                moveKnobPos = moveBasePos + d;
+                touchProvider.MoveJoystickVector = new Vector2(d.x / moveRadius, -d.y / moveRadius);
+            }
+            else if (fingerId == aimFingerId)
+            {
+                Vector2 d = p - aimBasePos;
+                if (d.magnitude > aimRadius) d = d.normalized * aimRadius;
+                aimKnobPos = aimBasePos + d;
+                touchProvider.AimJoystickVector = new Vector2(d.x / aimRadius, -d.y / aimRadius);
+            }
+        }
+
+        private void HandleTouchEnded(int fingerId)
+        {
+            if (fingerId == moveFingerId)
+            {
+                moveFingerId = -1; moveBasePos = defaultMoveBase; moveKnobPos = defaultMoveBase;
+                touchProvider.MoveJoystickVector = Vector2.zero;
+            }
+            else if (fingerId == aimFingerId)
+            {
+                aimFingerId = -1; aimBasePos = defaultAimBase; aimKnobPos = defaultAimBase;
+                touchProvider.AimJoystickVector = Vector2.zero; touchProvider.IsAimPressed = false;
+            }
+        }
+
+        private void ProcessMouseFallback()
+        {
+            Vector2 mp = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+            if (Input.GetMouseButtonDown(0)) HandleTouchBegan(99, mp);
+            else if (Input.GetMouseButton(0))
+            {
+                HandleTouchMoved(99, mp);
+                isFireHeld = Vector2.Distance(mp, fireCenter) <= fireRadius;
+                isContextHeld = hasInteractableTarget && Vector2.Distance(mp, contextCenter) <= contextRadius;
+            }
+            else if (Input.GetMouseButtonUp(0))
+            {
+                HandleTouchEnded(99);
+                isFireHeld = false; isContextHeld = false;
+            }
+        }
+
         private void OnGUI()
         {
-            if (!hasInteractableTarget) return;
+            if (!IsMobileActive) return;
+            MobileControlsDrawer.EnsureTextures();
 
-            float size = 80f;
-            float x = Screen.width - size - 40f;
-            float y = Screen.height * 0.52f;
-            Rect btnRect = new Rect(x, y, size, size);
+            MobileControlsDrawer.DrawRing(moveBasePos, moveRadius, new Color(0.2f, 0.8f, 1f, 0.35f));
+            MobileControlsDrawer.DrawCircle(moveKnobPos, moveRadius * 0.42f, new Color(0.3f, 0.9f, 1f, 0.75f));
 
-            Event e = Event.current;
-            if (e.type == EventType.MouseDown && btnRect.Contains(e.mousePosition))
+            Color aimColor = (shootingMode == TouchShootingMode.ModeA_PushToFire && touchProvider != null && touchProvider.AimJoystickVector.magnitude >= 0.28f)
+                ? new Color(1f, 0.35f, 0.1f, 0.85f) : new Color(0.9f, 0.7f, 0.2f, 0.45f);
+            MobileControlsDrawer.DrawRing(aimBasePos, aimRadius, aimColor * 0.6f);
+            MobileControlsDrawer.DrawCircle(aimKnobPos, aimRadius * 0.42f, aimColor);
+
+            MobileControlsDrawer.DrawButton(fireCenter, fireRadius, new Color(1f, 0.25f, 0.25f, 0.85f), "FIRE", isFireHeld);
+            MobileControlsDrawer.DrawButton(dashCenter, btnRadius, new Color(0.2f, 0.65f, 1f, 0.85f), "DASH", false);
+            MobileControlsDrawer.DrawButton(reloadCenter, btnRadius, new Color(1f, 0.85f, 0.2f, 0.85f), "RELOAD", false);
+
+            int slotNum = player != null ? player.ActiveSlotIndex + 1 : 1;
+            MobileControlsDrawer.DrawButton(swapCenter, btnRadius, new Color(0.7f, 0.35f, 0.95f, 0.85f), $"SWAP\nS{slotNum}", false);
+
+            var pa = PlayerAbilities.Instance;
+            string gText = (pa != null && !pa.IsGrenadeReady) ? $"{pa.GrenadeRemainingTime:F1}s" : "NADE";
+            MobileControlsDrawer.DrawButton(grenadeCenter, btnRadius, new Color(1f, 0.55f, 0.1f, 0.85f), gText, false);
+
+            string tText = (pa != null && !pa.IsTurretReady) ? $"{pa.TurretRemainingTime:F1}s" : "TURRET";
+            MobileControlsDrawer.DrawButton(turretCenter, btnRadius, new Color(0.1f, 0.95f, 0.85f, 0.85f), tText, false);
+
+            if (hasInteractableTarget)
             {
-                isContextHeld = true;
+                string ctxText = $"HOLD\n{interactActionName}\n{(currentInteractionProgress * 100):F0}%";
+                MobileControlsDrawer.DrawButton(contextCenter, contextRadius, new Color(0.2f, 1f, 0.4f, 0.9f), ctxText, isContextHeld);
             }
-            else if (e.type == EventType.MouseUp)
+
+            string modeText = shootingMode == TouchShootingMode.ModeA_PushToFire ? "[AUTO-FIRE ON]" : "[MANUAL FIRE]";
+            GUI.color = shootingMode == TouchShootingMode.ModeA_PushToFire ? new Color(0.2f, 1f, 0.5f, 0.9f) : new Color(1f, 0.7f, 0.2f, 0.9f);
+            if (GUI.Button(modeToggleRect, modeText))
             {
-                isContextHeld = false;
+                SetShootingMode(shootingMode == TouchShootingMode.ModeA_PushToFire ? TouchShootingMode.ModeB_AimAndFire : TouchShootingMode.ModeA_PushToFire);
             }
-
-            // Render Context Action Disk & Progress Ring
-            GUI.color = isContextHeld ? new Color(0.2f, 1f, 0.4f, 0.85f) : new Color(0.1f, 0.6f, 1f, 0.7f);
-            GUI.Box(btnRect, "");
-
-            // Progress Ring Fill indicator
-            if (currentInteractionProgress > 0f)
-            {
-                GUI.color = Color.yellow;
-                GUI.Box(new Rect(x + 4, y + size - 10, (size - 8) * currentInteractionProgress, 6), "");
-            }
-
             GUI.color = Color.white;
-            GUI.skin.label.alignment = TextAnchor.MiddleCenter;
-            GUI.Label(btnRect, $"HOLD\n{(currentInteractionProgress * 100):F0}%");
-            GUI.skin.label.alignment = TextAnchor.UpperLeft;
         }
     }
 }

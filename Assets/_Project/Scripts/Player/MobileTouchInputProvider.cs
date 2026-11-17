@@ -65,12 +65,17 @@ namespace Deadzone.Player
 
                 cmd.aimVector = aimDir;
             }
+            else if (FireButtonPressed && EnableAimAssist && playerTransform != null)
+            {
+                Vector3 autoAim = FindClosestHostileDirection();
+                if (autoAim != Vector3.zero) cmd.aimVector = autoAim;
+            }
 
             // Shooting Modes (B4)
             if (ShootingMode == TouchShootingMode.ModeA_PushToFire)
             {
-                // Mode A: fires automatically when aim deflection passes ~28%
-                cmd.fire = deflection >= 0.28f;
+                // Mode A: fires automatically when aim deflection passes ~28% or when fire button pressed
+                cmd.fire = (deflection >= 0.28f) || FireButtonPressed;
             }
             else
             {
@@ -132,6 +137,31 @@ namespace Deadzone.Player
             }
 
             return currentAim;
+        }
+
+        private Vector3 FindClosestHostileDirection()
+        {
+            if (playerTransform == null) return Vector3.zero;
+            Vector3 origin = playerTransform.position;
+            float closestDistSqr = 144f; // 12m radius
+            Vector3 bestDir = Vector3.zero;
+
+            Collider[] colliders = Physics.OverlapSphere(origin, 12f);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                TeamMember tm = colliders[i].GetComponentInParent<TeamMember>() ?? colliders[i].GetComponent<TeamMember>();
+                if (tm != null && tm.IsHostileTo(1))
+                {
+                    Vector3 toTarget = colliders[i].transform.position - origin;
+                    toTarget.y = 0f;
+                    if (toTarget.sqrMagnitude < closestDistSqr && toTarget.sqrMagnitude > 0.1f)
+                    {
+                        closestDistSqr = toTarget.sqrMagnitude;
+                        bestDir = toTarget.normalized;
+                    }
+                }
+            }
+            return bestDir;
         }
     }
 }

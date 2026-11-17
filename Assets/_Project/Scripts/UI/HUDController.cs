@@ -68,30 +68,34 @@ namespace Deadzone.UI
             GUI.Label(new Rect(28, 127, 204, 18), evacReady ? "EVAC CHOPPER: LANDED" : "EVAC CHOPPER: STANDBY");
             GUI.color = Color.white;
 
-            // 3. Tactical Abilities (Bottom Left)
+            // 3. Tactical Abilities
             if (playerAbilities != null)
             {
-                GUI.Box(new Rect(20, Screen.height - 90, 220, 68), "");
+                bool isMobile = MobileControlsManager.IsMobileActive;
+                float abY = isMobile ? 156f : Screen.height - 90f;
+                GUI.Box(new Rect(20, abY, 220, 68), "");
                 bool gReady = playerAbilities.IsGrenadeReady;
                 GUI.color = gReady ? new Color(1f, 0.7f, 0.2f) : new Color(0.6f, 0.6f, 0.6f);
                 string gText = gReady ? "[Q] GRENADE: READY" : $"[Q] GRENADE: {playerAbilities.GrenadeRemainingTime:F1}s";
-                GUI.Label(new Rect(30, Screen.height - 84, 200, 24), gText);
+                GUI.Label(new Rect(30, abY + 6, 200, 24), gText);
 
                 bool tReady = playerAbilities.IsTurretReady;
                 GUI.color = tReady ? new Color(0.2f, 0.9f, 1f) : new Color(0.6f, 0.6f, 0.6f);
                 string tText = tReady ? "[F] TURRET: READY" : $"[F] TURRET: {playerAbilities.TurretRemainingTime:F1}s";
-                GUI.Label(new Rect(30, Screen.height - 58, 200, 24), tText);
+                GUI.Label(new Rect(30, abY + 32, 200, 24), tText);
                 GUI.color = Color.white;
             }
 
-            // 4. Ammo & Active Weapon (Bottom Right)
+            // 4. Ammo & Active Weapon
             if (currentWeapon != null && currentWeapon.Data != null)
             {
+                bool isMobile = MobileControlsManager.IsMobileActive;
+                float ammoY = isMobile ? 56f : Screen.height - 85f;
                 string weaponName = currentWeapon.Data.weaponName.ToUpper();
                 string ammoStr = currentWeapon.IsReloading ? "RELOADING..." : $"{currentWeapon.CurrentAmmo} / {currentWeapon.Data.magazineCapacity}";
-                GUI.Box(new Rect(Screen.width - 240, Screen.height - 85, 220, 65), "");
-                GUI.Label(new Rect(Screen.width - 230, Screen.height - 80, 200, 25), $"WEAPON: {weaponName}");
-                GUI.Label(new Rect(Screen.width - 230, Screen.height - 55, 200, 25), $"AMMO: {ammoStr}  [R]");
+                GUI.Box(new Rect(Screen.width - 240, ammoY, 220, 65), "");
+                GUI.Label(new Rect(Screen.width - 230, ammoY + 5, 200, 25), $"WEAPON: {weaponName}");
+                GUI.Label(new Rect(Screen.width - 230, ammoY + 30, 200, 25), $"AMMO: {ammoStr}  [R]");
             }
 
             // 5. Hybrid Loadout Bar (Bottom Center - B1)

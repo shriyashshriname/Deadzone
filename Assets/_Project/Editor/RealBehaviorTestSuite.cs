@@ -21,7 +21,7 @@ namespace Deadzone.Editor
             UnityEngine.Debug.Log("==================================================");
 
             int passed = 0;
-            int total = 10;
+            int total = 11;
 
             if (Test_NoiseAlertRadius()) passed++;
             if (Test_FriendlyFireImmunity()) passed++;
@@ -33,10 +33,68 @@ namespace Deadzone.Editor
             if (Test_MuzzleFlashLightPoolCap()) passed++;
             if (Test_HitFlashShaderColorPropertyChange()) passed++;
             if (Test_EnemyBehindContainerReachesPlayer()) passed++;
+            if (Test_MobileTouchControlsAndShootingModes()) passed++;
 
             UnityEngine.Debug.Log("==================================================");
             UnityEngine.Debug.Log($"[REAL BEHAVIOR RESULTS] {passed}/{total} REAL BEHAVIOR Tests Passed ({(passed == total ? "100% SUCCESS" : "FAILED")})");
             UnityEngine.Debug.Log("==================================================");
+        }
+
+        public static bool Test_MobileTouchControlsAndShootingModes()
+        {
+            GameObject playerObj = new GameObject("Test_Player");
+            PlayerController pc = playerObj.AddComponent<PlayerController>();
+            MobileTouchInputProvider provider = new MobileTouchInputProvider(playerObj.transform);
+
+            // 1. Mode A: Push-to-fire deflection check
+            provider.ShootingMode = TouchShootingMode.ModeA_PushToFire;
+            provider.AimJoystickVector = new Vector2(0.2f, 0f); // 20% deflection < 28%
+            InputCommand cmd1 = provider.GetCommand();
+            bool modeAUnderThreshold = !cmd1.fire;
+
+            provider.AimJoystickVector = new Vector2(0.5f, 0f); // 50% deflection >= 28%
+            InputCommand cmd2 = provider.GetCommand();
+            bool modeAOverThreshold = cmd2.fire;
+
+            // 2. Mode B: Dedicated fire button required
+            provider.ShootingMode = TouchShootingMode.ModeB_AimAndFire;
+            provider.AimJoystickVector = new Vector2(0.8f, 0f); // 80% deflection
+            provider.FireButtonPressed = false;
+            InputCommand cmd3 = provider.GetCommand();
+            bool modeBAimOnly = !cmd3.fire; // Deflection does NOT fire in Mode B
+
+            provider.FireButtonPressed = true;
+            InputCommand cmd4 = provider.GetCommand();
+            bool modeBExplicitFire = cmd4.fire; // Fire button fires in Mode B
+
+            // 3. Discrete Action Buttons verification
+            provider.DashTriggered = true;
+            provider.ReloadTriggered = true;
+            provider.GrenadeTriggered = true;
+            provider.TurretTriggered = true;
+            provider.SwitchWeaponTriggered = true;
+            provider.ContextInteractHeld = true;
+            InputCommand cmd5 = provider.GetCommand();
+
+            bool actionsVerified = cmd5.dash && cmd5.reload && cmd5.grenade && cmd5.turret && cmd5.switchWeapon && cmd5.interact;
+
+            // 4. One-shot buttons consumption check
+            InputCommand cmd6 = provider.GetCommand();
+            bool oneShotConsumed = !cmd6.dash && !cmd6.reload && !cmd6.grenade && !cmd6.turret && !cmd6.switchWeapon;
+
+            bool success = modeAUnderThreshold && modeAOverThreshold && modeBAimOnly && modeBExplicitFire && actionsVerified && oneShotConsumed;
+
+            if (success)
+            {
+                UnityEngine.Debug.Log("[REAL TEST 11 PASSED] Mobile Touch Controls & Dual Shooting Modes: Mode A deflection auto-fire, Mode B explicit button fire, and dedicated action triggers verified.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogError($"[REAL TEST 11 FAILED] ModeAUnder={modeAUnderThreshold}, ModeAOver={modeAOverThreshold}, ModeBAimOnly={modeBAimOnly}, ModeBFire={modeBExplicitFire}, Actions={actionsVerified}, OneShot={oneShotConsumed}");
+            }
+
+            Object.DestroyImmediate(playerObj);
+            return success;
         }
 
         public static bool Test_NoiseAlertRadius()

@@ -48,8 +48,26 @@ namespace Deadzone.Player
             TeamMember tm = GetComponent<TeamMember>();
             if (tm != null) tm.TeamId = 1;
 
-            inputProvider = new DesktopInputProvider(transform);
+            InitializeInput();
             InitializeHybridLoadout();
+        }
+
+        private void InitializeInput()
+        {
+            if (Application.isMobilePlatform || Deadzone.UI.MobileControlsManager.ForceMobileInEditor)
+            {
+                var mgr = FindFirstObjectByType<Deadzone.UI.MobileControlsManager>();
+                if (mgr == null)
+                {
+                    GameObject go = new GameObject("MobileControlsManager");
+                    mgr = go.AddComponent<Deadzone.UI.MobileControlsManager>();
+                }
+                inputProvider = mgr.GetOrCreateProvider(transform);
+            }
+            else
+            {
+                inputProvider = new DesktopInputProvider(transform);
+            }
         }
 
         public void SetInputProvider(IInputProvider provider) => inputProvider = provider;
