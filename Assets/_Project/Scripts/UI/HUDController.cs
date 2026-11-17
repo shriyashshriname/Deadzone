@@ -204,7 +204,7 @@ namespace Deadzone.UI
             DrawPerkButton(pX + 20, pY + 92, pW - 40, PerkType.SpeedBoost, "+15% Movement Speed", 30, credits);
             DrawPerkButton(pX + 20, pY + 136, pW - 40, PerkType.HealthBoost, "+35 Max HP & Full Heal", 50, credits);
             DrawPerkButton(pX + 20, pY + 180, pW - 40, PerkType.FireRateBoost, "+25% Fire Rate", 45, credits);
-            DrawPerkButton(pX + 20, pY + 224, pW - 40, PerkType.DashCooldown, "-20% Dash Cooldown", 35, credits);
+            DrawPerkButton(pX + 20, pY + 224, pW - 40, PerkType.DashCooldownBoost, "-20% Dash Cooldown", 35, credits);
 
             if (GUI.Button(new Rect(pX + pW - 100, pY + 14, 85, 24), "CLOSE ✕")) isShopOpen = false;
         }
@@ -213,9 +213,9 @@ namespace Deadzone.UI
         {
             bool canAfford = currentCredits >= cost;
             GUI.color = canAfford ? Color.white : new Color(0.6f, 0.6f, 0.6f, 0.8f);
-            if (GUI.Button(new Rect(x, y, w, 38), $"{name}  ({cost} Credits)") && canAfford && PlayerPerks.Instance != null && GameManager.Instance != null)
+            if (GUI.Button(new Rect(x, y, w, 38), $"{name}  ({cost} Credits)") && canAfford && PlayerPerks.Instance != null)
             {
-                if (GameManager.Instance.SpendCredits(cost)) PlayerPerks.Instance.UpgradePerk(type);
+                PlayerPerks.Instance.TryPurchaseUpgrade(type, cost);
             }
             GUI.color = Color.white;
         }
