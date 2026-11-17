@@ -20,6 +20,7 @@ namespace Deadzone.Editor
             Debug.Log("==================================================");
 
             UrpSetupHelper.SetupMobileUrpAndConvert();
+            NavMeshSetupHelper.BakeNavMeshAndWireAgents();
             PipelineMetricsProbe.MeasureSceneMetrics();
 
             int testsPassed = 0;

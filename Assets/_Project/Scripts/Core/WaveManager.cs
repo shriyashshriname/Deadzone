@@ -126,6 +126,12 @@ namespace Deadzone.Core
             remainingInQueue = queue.Count; activeEnemiesCount = 0;
             for (int i = 0; i < queue.Count; i++)
             {
+                // Hard cap: never exceed 35 active enemies concurrently
+                while (activeEnemiesCount >= 35)
+                {
+                    yield return new WaitForSeconds(0.25f);
+                }
+
                 SpawnEnemy(queue[i], wave.speedMultiplier, wave.healthMultiplier);
                 remainingInQueue--; activeEnemiesCount++;
                 yield return new WaitForSeconds(wave.spawnInterval);

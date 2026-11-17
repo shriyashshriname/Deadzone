@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 using Deadzone.Core;
 using Deadzone.Player;
 
@@ -17,14 +18,28 @@ namespace Deadzone.Enemies
         [SerializeField] private float attackInterval = 1.0f;
         [SerializeField] private float attackRange = 1.5f;
 
+        [Header("AI Pathing")]
+        [SerializeField] private float pathUpdateInterval = 0.25f;
+
         private Health health;
+        private NavMeshAgent navAgent;
         private Transform playerTarget;
         private float nextAttackTime;
+        private float nextPathUpdateTime;
         private bool isDead;
 
         private void Awake()
         {
             health = GetComponent<Health>();
+            navAgent = GetComponent<NavMeshAgent>();
+            if (navAgent != null)
+            {
+                navAgent.speed = moveSpeed;
+                navAgent.stoppingDistance = stoppingDistance;
+                navAgent.updateRotation = false; // Custom smooth rotation
+            }
+            // Stagger initial path update so all enemies don't tick on the same frame
+            nextPathUpdateTime = Time.time + Random.Range(0f, pathUpdateInterval);
         }
 
         private void Start()
@@ -64,26 +79,84 @@ namespace Deadzone.Enemies
 
             float distanceToPlayer = Vector3.Distance(transform.position, playerTarget.position);
 
-            // Move towards player if outside stopping distance
-            if (distanceToPlayer > stoppingDistance)
+            // 1. Pathing Execution (NavMeshAgent or Obstacle-Aware Fallback)
+            if (navAgent != null && navAgent.isActiveAndEnabled && navAgent.isOnNavMesh)
             {
-                Vector3 direction = (playerTarget.position - transform.position).normalized;
-                direction.y = 0f;
-
-                if (direction.sqrMagnitude > 0.01f)
-                {
-                    Quaternion targetRot = Quaternion.LookRotation(direction);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
-                }
-
-                transform.position += direction * (moveSpeed * Time.deltaTime);
+                ExecuteNavMeshMovement(distanceToPlayer);
+            }
+            else
+            {
+                ExecuteObstacleAwareMovement(distanceToPlayer);
             }
 
-            // Attack player if within range
+            // 2. Combat Execution
             if (distanceToPlayer <= attackRange && Time.time >= nextAttackTime)
             {
                 AttackPlayer();
             }
+        }
+
+        private void ExecuteNavMeshMovement(float distanceToPlayer)
+        {
+            if (Time.time >= nextPathUpdateTime)
+            {
+                nextPathUpdateTime = Time.time + pathUpdateInterval + Random.Range(-0.03f, 0.03f);
+                if (distanceToPlayer > stoppingDistance)
+                {
+                    navAgent.isStopped = false;
+                    navAgent.SetDestination(playerTarget.position);
+                }
+                else
+                {
+                    navAgent.isStopped = true;
+                }
+            }
+
+            // Rotate towards movement direction or target
+            Vector3 desiredDir = navAgent.desiredVelocity;
+            desiredDir.y = 0f;
+            if (desiredDir.sqrMagnitude > 0.05f)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(desiredDir.normalized);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+            }
+            else
+            {
+                Vector3 toPlayer = (playerTarget.position - transform.position);
+                toPlayer.y = 0f;
+                if (toPlayer.sqrMagnitude > 0.05f)
+                {
+                    Quaternion targetRot = Quaternion.LookRotation(toPlayer.normalized);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+                }
+            }
+        }
+
+        private void ExecuteObstacleAwareMovement(float distanceToPlayer)
+        {
+            if (distanceToPlayer <= stoppingDistance) return;
+
+            Vector3 direction = (playerTarget.position - transform.position).normalized;
+            direction.y = 0f;
+
+            // Obstacle probe: raycast forward to avoid containers/walls
+            if (Physics.Raycast(transform.position + Vector3.up * 0.5f, direction, out RaycastHit hit, 1.2f))
+            {
+                if (!hit.collider.CompareTag("Player") && !hit.collider.CompareTag("Enemy"))
+                {
+                    Vector3 tangent = Vector3.Cross(hit.normal, Vector3.up);
+                    if (Vector3.Dot(tangent, direction) < 0f) tangent = -tangent;
+                    direction = (direction + tangent * 1.6f).normalized;
+                }
+            }
+
+            if (direction.sqrMagnitude > 0.01f)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+            }
+
+            transform.position += direction * (moveSpeed * Time.deltaTime);
         }
 
         private void AttackPlayer()
@@ -99,6 +172,7 @@ namespace Deadzone.Enemies
         public void SetSpeedMultiplier(float mult)
         {
             moveSpeed *= mult;
+            if (navAgent != null) navAgent.speed = moveSpeed;
         }
 
         public bool IsAlerted { get; private set; }
@@ -110,7 +184,6 @@ namespace Deadzone.Enemies
             IsAlerted = true;
             LastSoundOrigin = soundOrigin;
 
-            // Snap target to player if heard gunshot
             if (PlayerController.Instance != null)
             {
                 playerTarget = PlayerController.Instance.transform;
@@ -120,12 +193,16 @@ namespace Deadzone.Enemies
         private void HandleDeath()
         {
             isDead = true;
+            if (navAgent != null && navAgent.isActiveAndEnabled && navAgent.isOnNavMesh)
+            {
+                navAgent.isStopped = true;
+                navAgent.enabled = false;
+            }
+
             if (AudioManager.Instance != null) AudioManager.Instance.PlayHit();
 
-            // Disable collider immediately so it stops blocking shots
             if (TryGetComponent<Collider>(out var col)) col.enabled = false;
 
-            // Destroy gameobject after brief delay
             Destroy(gameObject, 0.25f);
         }
     }
