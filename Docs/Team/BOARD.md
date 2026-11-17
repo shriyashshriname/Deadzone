@@ -3,7 +3,11 @@
 - Gate 5 Mobile Android Export & APK Packaging
 
 ## Done
-- T-130 | NOVA | Vet and install AGY skills (blender-3d-asset-generation, juice-game-feel, ability-skill-system)
+- T-133 | SHIP | Package updated Android APK with 3D models & juice feedback -> 58.4 MB (Exit Code 0)
+- T-132 | UX | Deploy TutorialPromptManager contextual onboarding banner for new operators
+- T-131 | GAME | Deploy JuiceFeedbackManager: hit-stop micro-pauses on heavy hits & explosive barrels
+- T-130 | ART | Author Gate 1 Asset Contract & generate 6 low-poly 3D models (Props & Characters)
+- T-129 | NOVA | Vet and install AGY skills (blender-3d-asset-generation, juice-game-feel, ability-skill-system)
 - T-129 | UX | Streamline mobile controls: anchor fixed corner joysticks, suspend touch on menus, remove redundant fire button
 - T-128 | UX | Dedicated Mobile UI view toggle, remove PC keyboard badges, mobile pause & shop badges
 - T-125 | GAME | Land Tactical Field Upgrade Terminal [B] & live stat perk scaling

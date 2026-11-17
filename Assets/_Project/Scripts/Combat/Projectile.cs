@@ -97,6 +97,7 @@ namespace Deadzone.Combat
                     alreadyHit.Add(damageable);
                     damageable.TakeDamage(damage);
                     if (AudioManager.Instance != null) AudioManager.Instance.PlayHit();
+                    if (JuiceFeedbackManager.Instance != null) JuiceFeedbackManager.Instance.TriggerHeavyHitFeedback(damage);
 
                     penetration--;
                     if (penetration <= 0)

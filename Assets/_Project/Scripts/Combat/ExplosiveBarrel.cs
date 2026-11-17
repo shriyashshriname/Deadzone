@@ -36,10 +36,14 @@ namespace Deadzone.Combat
             if (hasExploded) return;
             hasExploded = true;
 
-            // Trigger Camera Shake
+            // Trigger Camera Shake & Juice
             if (TopDownCamera.Instance != null)
             {
                 TopDownCamera.Instance.TriggerShake(0.45f, 0.25f);
+            }
+            if (JuiceFeedbackManager.Instance != null)
+            {
+                JuiceFeedbackManager.Instance.PlayHitStop(0.05f);
             }
 
             // Damage all entities in radius

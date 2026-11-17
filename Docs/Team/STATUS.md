@@ -1,11 +1,11 @@
 # STATUS (NOVA rewrites each loop, max 40 lines)
-Phase: Mobile Controls Fixed & AGY Skills Vetted & Installed (Gate 0 Docs & Skills Setup Complete)
+Phase: Gate 4 Vertical Slice Polish — 3D Models, Combat Juice & Onboarding Flow Landed
 Engine: Unity 6000.6.9f1 (Tech Stream / Staging) on E: drive
-Git: Clean per-task commits; remote origin pushed to https://github.com/shriyashshriname/Deadzone.git (master + feature/urp + baseline-1 tag)
-Controls: Twin-stick fixed bottom corners, Mode A auto-fire on aim deflection >= 20%, touch suspended when HUD menus open
-Mobile UI: Dedicated clean mobile HUD (no keyboard brackets, touchable cards, corner touch radii)
-Skills Installed: 3 approved skills (.agents/skills/blender-3d-asset-generation, juice-game-feel, ability-skill-system)
-Blender Status: Not yet installed on host PC; detailed install guide logged in Docs/Team/HUMAN_TODO.md
-Verification Suite: 14/14 Smoke Playtests PASSED | 10/10 Real Behavior Tests PASSED (100% Success)
-Android Build: Builds/Android/Deadzone.apk generated successfully (42.5 MB, Exit Code 0)
-Next Action: Founder installs Deadzone.apk on device or runs Playmode in Unity Editor to verify new anchored mobile touch controls.
+Git: Clean per-task commits; tracked on origin https://github.com/shriyashshriname/Deadzone.git
+Controls: Permanently anchored fixed corner joysticks, Mode A auto-firing aim stick, full menu input suspension
+3D Models Generated: 6 low-poly models (MilitaryCrate, HazardBarrel, ConcreteBarrier, ModularBlastWall, TacticalOperator, InfectedWalker)
+Juice Feedback: Integrated JuiceFeedbackManager (hit-stop micro-pauses for heavy hits, trauma screen shake decay)
+Onboarding: Deployed TutorialPromptManager contextual instructional banner for new operators
+Verification Suite: 14/14 Smoke Playtests PASSED | 11/11 Real Behavior Tests PASSED (100% Success)
+Android Build: Builds/Android/Deadzone.apk generated successfully (58.4 MB, Exit Code 0)
+Next Action: Founder plays 1 full run (8-10 mins) on Android device or in Unity Editor to evaluate 3D models and combat feel.
