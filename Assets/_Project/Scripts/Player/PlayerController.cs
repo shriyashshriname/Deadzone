@@ -95,6 +95,7 @@ namespace Deadzone.Player
         {
             if (health != null && health.IsDead) return;
             if (PlayerRevive.Instance != null && PlayerRevive.Instance.IsDowned) return;
+            if (Deadzone.UI.HUDController.IsMenuOpen) return;
 
             if (transform.position.y < -3.0f)
             {

@@ -13,6 +13,8 @@ namespace Deadzone.UI
         private bool isShopOpen = false;
         private bool isPaused = false;
 
+        public static bool IsMenuOpen { get; private set; }
+
         private void Start() => FindPlayerReferences();
 
         private void FindPlayerReferences()
@@ -29,6 +31,7 @@ namespace Deadzone.UI
         {
             if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.Tab)) isShopOpen = !isShopOpen;
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P)) TogglePause();
+            IsMenuOpen = isShopOpen || isPaused;
         }
 
         public void TogglePause()
