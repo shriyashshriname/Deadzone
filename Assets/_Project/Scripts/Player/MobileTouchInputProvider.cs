@@ -74,8 +74,8 @@ namespace Deadzone.Player
             // Shooting Modes (B4)
             if (ShootingMode == TouchShootingMode.ModeA_PushToFire)
             {
-                // Mode A: fires automatically when aim deflection passes ~28% or when fire button pressed
-                cmd.fire = (deflection >= 0.28f) || FireButtonPressed;
+                // Mode A: fires automatically when aim deflection passes ~20% or when fire button pressed
+                cmd.fire = (deflection >= 0.20f) || FireButtonPressed;
             }
             else
             {

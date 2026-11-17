@@ -48,11 +48,11 @@ namespace Deadzone.Editor
 
             // 1. Mode A: Push-to-fire deflection check
             provider.ShootingMode = TouchShootingMode.ModeA_PushToFire;
-            provider.AimJoystickVector = new Vector2(0.2f, 0f); // 20% deflection < 28%
+            provider.AimJoystickVector = new Vector2(0.1f, 0f); // 10% deflection < 20%
             InputCommand cmd1 = provider.GetCommand();
             bool modeAUnderThreshold = !cmd1.fire;
 
-            provider.AimJoystickVector = new Vector2(0.5f, 0f); // 50% deflection >= 28%
+            provider.AimJoystickVector = new Vector2(0.5f, 0f); // 50% deflection >= 20%
             InputCommand cmd2 = provider.GetCommand();
             bool modeAOverThreshold = cmd2.fire;
 

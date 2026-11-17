@@ -24,9 +24,9 @@ namespace Deadzone.UI
                     float d = Vector2.Distance(new Vector2(x, y), c) / rad;
                     int i = y * sz + x;
                     cPix[i] = new Color(1f, 1f, 1f, Mathf.Clamp01((1f - d) * 16f));
-                    float ringD = Mathf.Abs(d - 0.85f);
-                    float rim = Mathf.Clamp01((0.15f - ringD) * 16f);
-                    float fill = d < 0.85f ? 0.22f : 0f;
+                    float ringD = Mathf.Abs(d - 0.88f);
+                    float rim = Mathf.Clamp01((0.12f - ringD) * 16f);
+                    float fill = d < 0.88f ? 0.35f : 0f;
                     rPix[i] = new Color(1f, 1f, 1f, Mathf.Clamp01(rim + fill));
                 }
             }
@@ -48,11 +48,13 @@ namespace Deadzone.UI
             GUI.color = Color.white;
         }
 
-        public static void DrawButton(Vector2 center, float radius, Color color, string label, bool pressed)
+        public static void DrawButton(Vector2 center, float radius, Color rimColor, string label, bool pressed)
         {
             float r = pressed ? radius * 1.08f : radius;
-            DrawCircle(center, r, color);
-            DrawRing(center, r, new Color(1f, 1f, 1f, 0.75f));
+            // Dark glass backing
+            DrawCircle(center, r, new Color(0.06f, 0.10f, 0.16f, 0.75f));
+            // Colored neon rim
+            DrawRing(center, r, rimColor);
 
             if (btnStyle == null)
             {

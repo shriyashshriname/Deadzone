@@ -1,12 +1,13 @@
 using UnityEngine;
 using Deadzone.Player;
+using Deadzone.Combat;
 
 namespace Deadzone.UI
 {
     public class MobileControlsManager : MonoBehaviour
     {
         public static MobileControlsManager Instance { get; private set; }
-        public static bool ForceMobileInEditor { get; set; } = false;
+        public static bool ForceMobileInEditor { get; set; } = true;
         public static bool IsMobileActive => Application.isMobilePlatform || ForceMobileInEditor;
 
         [SerializeField] private TouchShootingMode shootingMode = TouchShootingMode.ModeA_PushToFire;
@@ -19,7 +20,6 @@ namespace Deadzone.UI
         private Vector2 defaultMoveBase, defaultAimBase;
         private float moveRadius, aimRadius, btnRadius, fireRadius, contextRadius;
         private Vector2 fireCenter, dashCenter, reloadCenter, swapCenter, grenadeCenter, turretCenter, contextCenter;
-        private Rect modeToggleRect;
         private bool hasInteractableTarget, isFireHeld, isContextHeld;
         private float currentInteractionProgress;
         private string interactActionName = "USE";
@@ -52,13 +52,14 @@ namespace Deadzone.UI
             BindPlayer();
         }
 
-        private void BindPlayer()
+        public void BindPlayer()
         {
             if (PlayerController.Instance != null)
             {
                 player = PlayerController.Instance;
                 touchProvider = GetOrCreateProvider(player.transform);
                 if (IsMobileActive) player.SetInputProvider(touchProvider);
+                else player.SetInputProvider(new DesktopInputProvider(player.transform));
             }
         }
 
@@ -71,22 +72,24 @@ namespace Deadzone.UI
         private void RecalculateLayout()
         {
             float w = Screen.width, h = Screen.height;
-            moveRadius = h * 0.13f; aimRadius = h * 0.13f;
-            btnRadius = h * 0.052f; fireRadius = h * 0.076f; contextRadius = h * 0.065f;
+            moveRadius = h * 0.14f; aimRadius = h * 0.14f;
+            btnRadius = h * 0.056f; fireRadius = h * 0.075f; contextRadius = h * 0.065f;
 
-            defaultMoveBase = new Vector2(h * 0.26f, h * 0.74f);
-            defaultAimBase = new Vector2(w - h * 0.28f, h * 0.74f);
+            defaultMoveBase = new Vector2(h * 0.25f, h * 0.73f);
+            defaultAimBase = new Vector2(w - h * 0.28f, h * 0.73f);
             if (moveFingerId == -1) { moveBasePos = defaultMoveBase; moveKnobPos = defaultMoveBase; }
             if (aimFingerId == -1) { aimBasePos = defaultAimBase; aimKnobPos = defaultAimBase; }
 
+            // Mode B explicit fire button
             fireCenter = new Vector2(w - h * 0.48f, h * 0.68f);
-            dashCenter = new Vector2(w - h * 0.12f, h * 0.88f);
-            reloadCenter = new Vector2(w - h * 0.12f, h * 0.52f);
-            swapCenter = new Vector2(w - h * 0.25f, h * 0.42f);
-            grenadeCenter = new Vector2(w - h * 0.39f, h * 0.42f);
-            turretCenter = new Vector2(w - h * 0.53f, h * 0.46f);
-            contextCenter = new Vector2(w - h * 0.32f, h * 0.24f);
-            modeToggleRect = new Rect(w - 190f, 15f, 175f, 36f);
+
+            // Ergonomic thumb arc around the right joystick
+            dashCenter = new Vector2(w - h * 0.10f, h * 0.88f);
+            reloadCenter = new Vector2(w - h * 0.10f, h * 0.50f);
+            swapCenter = new Vector2(w - h * 0.22f, h * 0.40f);
+            grenadeCenter = new Vector2(w - h * 0.36f, h * 0.40f);
+            turretCenter = new Vector2(w - h * 0.48f, h * 0.48f);
+            contextCenter = new Vector2(w - h * 0.28f, h * 0.24f);
         }
 
         private void Update()
@@ -94,11 +97,7 @@ namespace Deadzone.UI
             if (Input.GetKeyDown(KeyCode.F1))
             {
                 ForceMobileInEditor = !ForceMobileInEditor;
-                if (player != null)
-                {
-                    if (ForceMobileInEditor) player.SetInputProvider(touchProvider);
-                    else player.SetInputProvider(new DesktopInputProvider(player.transform));
-                }
+                BindPlayer();
             }
 
             if (player == null && PlayerController.Instance != null) BindPlayer();
@@ -122,7 +121,7 @@ namespace Deadzone.UI
                     else if (t.phase == TouchPhase.Moved || t.phase == TouchPhase.Stationary) HandleTouchMoved(t.fingerId, p);
                     else if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled) HandleTouchEnded(t.fingerId);
 
-                    if (Vector2.Distance(p, fireCenter) <= fireRadius) fireHeld = true;
+                    if (shootingMode == TouchShootingMode.ModeB_AimAndFire && Vector2.Distance(p, fireCenter) <= fireRadius) fireHeld = true;
                     if (hasInteractableTarget && Vector2.Distance(p, contextCenter) <= contextRadius) ctxHeld = true;
                 }
                 isFireHeld = fireHeld; isContextHeld = ctxHeld;
@@ -138,21 +137,20 @@ namespace Deadzone.UI
 
         private void HandleTouchBegan(int fingerId, Vector2 p)
         {
-            if (modeToggleRect.Contains(p)) { SetShootingMode(shootingMode == TouchShootingMode.ModeA_PushToFire ? TouchShootingMode.ModeB_AimAndFire : TouchShootingMode.ModeA_PushToFire); return; }
             if (Vector2.Distance(p, dashCenter) <= btnRadius) { touchProvider.DashTriggered = true; return; }
             if (Vector2.Distance(p, reloadCenter) <= btnRadius) { touchProvider.ReloadTriggered = true; return; }
             if (Vector2.Distance(p, swapCenter) <= btnRadius) { touchProvider.SwitchWeaponTriggered = true; return; }
             if (Vector2.Distance(p, grenadeCenter) <= btnRadius) { touchProvider.GrenadeTriggered = true; return; }
             if (Vector2.Distance(p, turretCenter) <= btnRadius) { touchProvider.TurretTriggered = true; return; }
             if (hasInteractableTarget && Vector2.Distance(p, contextCenter) <= contextRadius) return;
-            if (Vector2.Distance(p, fireCenter) <= fireRadius) return;
+            if (shootingMode == TouchShootingMode.ModeB_AimAndFire && Vector2.Distance(p, fireCenter) <= fireRadius) return;
 
             if (p.x < Screen.width * 0.45f && p.y > Screen.height * 0.25f && moveFingerId == -1)
             {
                 moveFingerId = fingerId; moveBasePos = p; moveKnobPos = p;
                 touchProvider.MoveJoystickVector = Vector2.zero;
             }
-            else if (p.x >= Screen.width * 0.45f && p.y > Screen.height * 0.30f && aimFingerId == -1)
+            else if (p.x >= Screen.width * 0.45f && p.y > Screen.height * 0.25f && aimFingerId == -1)
             {
                 aimFingerId = fingerId; aimBasePos = p; aimKnobPos = p;
                 touchProvider.AimJoystickVector = Vector2.zero; touchProvider.IsAimPressed = true;
@@ -198,7 +196,7 @@ namespace Deadzone.UI
             else if (Input.GetMouseButton(0))
             {
                 HandleTouchMoved(99, mp);
-                isFireHeld = Vector2.Distance(mp, fireCenter) <= fireRadius;
+                isFireHeld = shootingMode == TouchShootingMode.ModeB_AimAndFire && Vector2.Distance(mp, fireCenter) <= fireRadius;
                 isContextHeld = hasInteractableTarget && Vector2.Distance(mp, contextCenter) <= contextRadius;
             }
             else if (Input.GetMouseButtonUp(0))
@@ -210,20 +208,46 @@ namespace Deadzone.UI
 
         private void OnGUI()
         {
+            if (Application.isEditor)
+            {
+                string toggleText = ForceMobileInEditor ? "VIEW: MOBILE UI [ON]" : "VIEW: DESKTOP PC";
+                GUI.color = ForceMobileInEditor ? new Color(0.2f, 1f, 0.5f, 0.85f) : new Color(0.8f, 0.8f, 0.8f, 0.85f);
+                if (GUI.Button(new Rect(Screen.width * 0.5f - 85f, 6f, 170f, 24f), toggleText))
+                {
+                    ForceMobileInEditor = !ForceMobileInEditor;
+                    BindPlayer();
+                }
+                GUI.color = Color.white;
+            }
+
             if (!IsMobileActive) return;
             MobileControlsDrawer.EnsureTextures();
 
-            MobileControlsDrawer.DrawRing(moveBasePos, moveRadius, new Color(0.2f, 0.8f, 1f, 0.35f));
-            MobileControlsDrawer.DrawCircle(moveKnobPos, moveRadius * 0.42f, new Color(0.3f, 0.9f, 1f, 0.75f));
+            // Left Move Joystick
+            MobileControlsDrawer.DrawCircle(moveBasePos, moveRadius, new Color(0.06f, 0.10f, 0.16f, 0.65f));
+            MobileControlsDrawer.DrawRing(moveBasePos, moveRadius, new Color(0.2f, 0.8f, 1f, 0.55f));
+            MobileControlsDrawer.DrawCircle(moveKnobPos, moveRadius * 0.40f, new Color(0.3f, 0.9f, 1f, 0.85f));
 
-            Color aimColor = (shootingMode == TouchShootingMode.ModeA_PushToFire && touchProvider != null && touchProvider.AimJoystickVector.magnitude >= 0.28f)
-                ? new Color(1f, 0.35f, 0.1f, 0.85f) : new Color(0.9f, 0.7f, 0.2f, 0.45f);
-            MobileControlsDrawer.DrawRing(aimBasePos, aimRadius, aimColor * 0.6f);
-            MobileControlsDrawer.DrawCircle(aimKnobPos, aimRadius * 0.42f, aimColor);
+            // Right Aim & Shoot Joystick
+            bool isFiring = touchProvider != null && touchProvider.AimJoystickVector.magnitude >= 0.20f;
+            Color aimRingColor = isFiring ? new Color(1f, 0.35f, 0.1f, 0.95f) : new Color(0.9f, 0.7f, 0.2f, 0.55f);
+            Color aimKnobColor = isFiring ? new Color(1f, 0.35f, 0.1f, 0.95f) : new Color(0.9f, 0.75f, 0.25f, 0.85f);
+            MobileControlsDrawer.DrawCircle(aimBasePos, aimRadius, new Color(0.06f, 0.10f, 0.16f, 0.65f));
+            MobileControlsDrawer.DrawRing(aimBasePos, aimRadius, aimRingColor);
+            MobileControlsDrawer.DrawCircle(aimKnobPos, aimRadius * 0.40f, aimKnobColor);
 
-            MobileControlsDrawer.DrawButton(fireCenter, fireRadius, new Color(1f, 0.25f, 0.25f, 0.85f), "FIRE", isFireHeld);
+            // In Mode B only, show separate fire button
+            if (shootingMode == TouchShootingMode.ModeB_AimAndFire)
+            {
+                MobileControlsDrawer.DrawButton(fireCenter, fireRadius, new Color(1f, 0.25f, 0.25f, 0.9f), "FIRE", isFireHeld);
+            }
+
+            // Dedicated Action Buttons
             MobileControlsDrawer.DrawButton(dashCenter, btnRadius, new Color(0.2f, 0.65f, 1f, 0.85f), "DASH", false);
-            MobileControlsDrawer.DrawButton(reloadCenter, btnRadius, new Color(1f, 0.85f, 0.2f, 0.85f), "RELOAD", false);
+
+            var weapon = player != null ? player.GetComponentInChildren<Weapon>() : null;
+            string relText = (weapon != null && weapon.IsReloading) ? "REL..." : (weapon != null ? $"REL\n{weapon.CurrentAmmo}" : "RELOAD");
+            MobileControlsDrawer.DrawButton(reloadCenter, btnRadius, new Color(1f, 0.85f, 0.2f, 0.85f), relText, false);
 
             int slotNum = player != null ? player.ActiveSlotIndex + 1 : 1;
             MobileControlsDrawer.DrawButton(swapCenter, btnRadius, new Color(0.7f, 0.35f, 0.95f, 0.85f), $"SWAP\nS{slotNum}", false);
@@ -238,16 +262,8 @@ namespace Deadzone.UI
             if (hasInteractableTarget)
             {
                 string ctxText = $"HOLD\n{interactActionName}\n{(currentInteractionProgress * 100):F0}%";
-                MobileControlsDrawer.DrawButton(contextCenter, contextRadius, new Color(0.2f, 1f, 0.4f, 0.9f), ctxText, isContextHeld);
+                MobileControlsDrawer.DrawButton(contextCenter, contextRadius, new Color(0.2f, 1f, 0.4f, 0.95f), ctxText, isContextHeld);
             }
-
-            string modeText = shootingMode == TouchShootingMode.ModeA_PushToFire ? "[AUTO-FIRE ON]" : "[MANUAL FIRE]";
-            GUI.color = shootingMode == TouchShootingMode.ModeA_PushToFire ? new Color(0.2f, 1f, 0.5f, 0.9f) : new Color(1f, 0.7f, 0.2f, 0.9f);
-            if (GUI.Button(modeToggleRect, modeText))
-            {
-                SetShootingMode(shootingMode == TouchShootingMode.ModeA_PushToFire ? TouchShootingMode.ModeB_AimAndFire : TouchShootingMode.ModeA_PushToFire);
-            }
-            GUI.color = Color.white;
         }
     }
 }

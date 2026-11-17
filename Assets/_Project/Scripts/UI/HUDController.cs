@@ -41,108 +41,130 @@ namespace Deadzone.UI
         {
             if (playerHealth == null || currentWeapon == null || playerAbilities == null) FindPlayerReferences();
             Color oldColor = GUI.color;
+            bool isMobile = MobileControlsManager.IsMobileActive;
 
             // 1. Health Bar & Shop Toggle (Top Left)
             if (playerHealth != null)
             {
                 float hpPct = Mathf.Clamp01(playerHealth.CurrentHealth / playerHealth.MaxHealth);
-                GUI.Box(new Rect(20, 20, 220, 32), "");
+                GUI.Box(new Rect(16, 16, 210, 28), "");
                 GUI.color = hpPct > 0.35f ? new Color(0.2f, 0.9f, 0.3f) : new Color(0.95f, 0.2f, 0.2f);
-                GUI.Box(new Rect(22, 22, 216 * hpPct, 28), "");
+                GUI.Box(new Rect(18, 18, 206 * hpPct, 24), "");
                 GUI.color = Color.white;
-                GUI.Label(new Rect(30, 26, 200, 25), $"HEALTH: {Mathf.CeilToInt(playerHealth.CurrentHealth)} / {playerHealth.MaxHealth}");
+                GUI.Label(new Rect(24, 20, 200, 22), $"♥ {Mathf.CeilToInt(playerHealth.CurrentHealth)} / {playerHealth.MaxHealth}");
 
-                if (GUI.Button(new Rect(20, 56, 140, 26), isShopOpen ? "CLOSE SHOP [B]" : "UPGRADE SHOP [B]")) isShopOpen = !isShopOpen;
+                string shopText = isShopOpen ? (isMobile ? "CLOSE SHOP" : "CLOSE [B]") : (isMobile ? "UPGRADE SHOP ⚡" : "UPGRADE SHOP [B]");
+                if (GUI.Button(new Rect(16, 48, 130, 26), shopText)) isShopOpen = !isShopOpen;
             }
 
             // 2. Sector Mission Objectives (Top Left)
             int onlineStations = PowerSubstation.TotalSubstationsOnline;
             int totalStations = Mathf.Max(2, PowerSubstation.TotalSubstationsCount);
-            GUI.Box(new Rect(20, 86, 220, 64), "");
+            GUI.Box(new Rect(16, 78, 210, 56), "");
             GUI.color = new Color(0.2f, 0.9f, 1f);
-            GUI.Label(new Rect(28, 89, 204, 18), "=== SECTOR OBJECTIVES ===");
+            GUI.Label(new Rect(22, 80, 200, 18), "=== SECTOR OBJECTIVES ===");
             GUI.color = onlineStations >= totalStations ? new Color(0.2f, 1f, 0.4f) : Color.white;
-            GUI.Label(new Rect(28, 108, 204, 18), $"GRID POWER: {onlineStations}/{totalStations} ONLINE");
+            GUI.Label(new Rect(22, 98, 200, 18), $"GRID: {onlineStations}/{totalStations} ONLINE");
             bool evacReady = ExtractionZone.Instance != null && ExtractionZone.Instance.IsActive;
             GUI.color = evacReady ? new Color(0.2f, 1f, 0.4f) : new Color(0.7f, 0.7f, 0.7f);
-            GUI.Label(new Rect(28, 127, 204, 18), evacReady ? "EVAC CHOPPER: LANDED" : "EVAC CHOPPER: STANDBY");
+            GUI.Label(new Rect(22, 114, 200, 18), evacReady ? "EVAC: READY AT CENTER" : "EVAC: STANDBY");
             GUI.color = Color.white;
 
-            // 3. Tactical Abilities
-            if (playerAbilities != null)
+            // 3. Tactical Abilities (Desktop Only - Mobile buttons handle this)
+            if (!isMobile && playerAbilities != null)
             {
-                bool isMobile = MobileControlsManager.IsMobileActive;
-                float abY = isMobile ? 156f : Screen.height - 90f;
-                GUI.Box(new Rect(20, abY, 220, 68), "");
+                GUI.Box(new Rect(20, Screen.height - 90, 220, 68), "");
                 bool gReady = playerAbilities.IsGrenadeReady;
                 GUI.color = gReady ? new Color(1f, 0.7f, 0.2f) : new Color(0.6f, 0.6f, 0.6f);
-                string gText = gReady ? "[Q] GRENADE: READY" : $"[Q] GRENADE: {playerAbilities.GrenadeRemainingTime:F1}s";
-                GUI.Label(new Rect(30, abY + 6, 200, 24), gText);
-
+                GUI.Label(new Rect(30, Screen.height - 84, 200, 24), gReady ? "[Q] GRENADE: READY" : $"[Q] GRENADE: {playerAbilities.GrenadeRemainingTime:F1}s");
                 bool tReady = playerAbilities.IsTurretReady;
                 GUI.color = tReady ? new Color(0.2f, 0.9f, 1f) : new Color(0.6f, 0.6f, 0.6f);
-                string tText = tReady ? "[F] TURRET: READY" : $"[F] TURRET: {playerAbilities.TurretRemainingTime:F1}s";
-                GUI.Label(new Rect(30, abY + 32, 200, 24), tText);
+                GUI.Label(new Rect(30, Screen.height - 58, 200, 24), tReady ? "[F] TURRET: READY" : $"[F] TURRET: {playerAbilities.TurretRemainingTime:F1}s");
                 GUI.color = Color.white;
             }
 
             // 4. Ammo & Active Weapon
             if (currentWeapon != null && currentWeapon.Data != null)
             {
-                bool isMobile = MobileControlsManager.IsMobileActive;
-                float ammoY = isMobile ? 56f : Screen.height - 85f;
                 string weaponName = currentWeapon.Data.weaponName.ToUpper();
                 string ammoStr = currentWeapon.IsReloading ? "RELOADING..." : $"{currentWeapon.CurrentAmmo} / {currentWeapon.Data.magazineCapacity}";
-                GUI.Box(new Rect(Screen.width - 240, ammoY, 220, 65), "");
-                GUI.Label(new Rect(Screen.width - 230, ammoY + 5, 200, 25), $"WEAPON: {weaponName}");
-                GUI.Label(new Rect(Screen.width - 230, ammoY + 30, 200, 25), $"AMMO: {ammoStr}  [R]");
+                if (!isMobile)
+                {
+                    GUI.Box(new Rect(Screen.width - 240, Screen.height - 85, 220, 65), "");
+                    GUI.Label(new Rect(Screen.width - 230, Screen.height - 80, 200, 25), $"WEAPON: {weaponName}");
+                    GUI.Label(new Rect(Screen.width - 230, Screen.height - 55, 200, 25), $"AMMO: {ammoStr}  [R]");
+                }
+                else
+                {
+                    GUI.Box(new Rect(Screen.width - 240, 72, 185, 38), "");
+                    GUI.Label(new Rect(Screen.width - 232, 74, 175, 18), $"GUN: {weaponName}");
+                    GUI.Label(new Rect(Screen.width - 232, 90, 175, 18), $"AMMO: {ammoStr}");
+                }
             }
 
-            // 5. Hybrid Loadout Bar (Bottom Center - B1)
-            var pc = PlayerController.Instance;
-            string slot1Name = pc != null && pc.PrimaryWeapon != null ? pc.PrimaryWeapon.weaponName : "BASIC RIFLE";
-            string slot2Name = pc != null && pc.SecondaryWeapon != null ? pc.SecondaryWeapon.weaponName : "EMPTY (PICKUP)";
-            int activeSlot = pc != null ? pc.ActiveSlotIndex : 0;
-            string slot1Display = activeSlot == 0 ? $"★ [1] {slot1Name}" : $"[1] {slot1Name}";
-            string slot2Display = activeSlot == 1 ? $"★ [2] {slot2Name}" : $"[2] {slot2Name}";
+            // 5. Mobile Pause Button (Top Right)
+            if (isMobile)
+            {
+                if (GUI.Button(new Rect(Screen.width - 48, 16, 36, 36), "⏸")) TogglePause();
+            }
 
-            GUI.Box(new Rect(Screen.width / 2 - 220, Screen.height - 45, 440, 32), "");
-            GUI.Label(new Rect(Screen.width / 2 - 210, Screen.height - 40, 420, 25), $"{slot1Display}   |   {slot2Display}  [Q TO SWAP]");
-
-            // 6. Wave, Kills & Credits (Top Right - B2)
+            // 6. Wave, Kills & Credits (Top Right)
             int kills = GameManager.Instance != null ? GameManager.Instance.KillCount : 0;
             int credits = GameManager.Instance != null ? GameManager.Instance.CreditsEarned : 0;
             int wave = WaveManager.Instance != null ? WaveManager.Instance.CurrentWaveNumber : 1;
             int hostiles = WaveManager.Instance != null ? WaveManager.Instance.TotalRemainingHostiles : 0;
             bool isIntermission = WaveManager.Instance != null && WaveManager.Instance.IsIntermission;
 
-            GUI.Box(new Rect(Screen.width - 220, 20, 200, 78), "");
-            GUI.Label(new Rect(Screen.width - 210, 24, 180, 20), $"WAVE: {wave}   |   CREDITS: {credits}");
-            GUI.Label(new Rect(Screen.width - 210, 46, 180, 20), $"KILLS: {kills}");
+            float waveX = isMobile ? Screen.width - 240 : Screen.width - 220;
+            GUI.Box(new Rect(waveX, 16, isMobile ? 185 : 200, 52), "");
+            GUI.Label(new Rect(waveX + 8, 18, 180, 18), $"WAVE {wave}  |  💎 {credits}");
             GUI.color = hostiles > 0 ? new Color(1f, 0.4f, 0.4f) : Color.white;
-            GUI.Label(new Rect(Screen.width - 210, 68, 180, 20), isIntermission ? "CLEARED! REGROUP" : $"HOSTILES: {hostiles}");
+            GUI.Label(new Rect(waveX + 8, 36, 180, 18), isIntermission ? "CLEARED! REGROUP" : $"KILLS: {kills} | HOSTILES: {hostiles}");
             GUI.color = Color.white;
 
-            // 7. Evac / Wave Banner (Top Center)
+            // 7. Loadout Bar (Bottom Center)
+            var pc = PlayerController.Instance;
+            string slot1Name = pc != null && pc.PrimaryWeapon != null ? pc.PrimaryWeapon.weaponName : "BASIC RIFLE";
+            string slot2Name = pc != null && pc.SecondaryWeapon != null ? pc.SecondaryWeapon.weaponName : "EMPTY";
+            int activeSlot = pc != null ? pc.ActiveSlotIndex : 0;
+
+            if (!isMobile)
+            {
+                string s1 = activeSlot == 0 ? $"★ [1] {slot1Name}" : $"[1] {slot1Name}";
+                string s2 = activeSlot == 1 ? $"★ [2] {slot2Name}" : $"[2] {slot2Name}";
+                GUI.Box(new Rect(Screen.width / 2 - 220, Screen.height - 45, 440, 32), "");
+                GUI.Label(new Rect(Screen.width / 2 - 210, Screen.height - 40, 420, 25), $"{s1}   |   {s2}  [Q TO SWAP]");
+            }
+            else
+            {
+                float barW = 280, barH = 34, barX = (Screen.width - barW) * 0.5f, barY = Screen.height - 42;
+                GUI.Box(new Rect(barX, barY, barW, barH), "");
+                GUI.color = activeSlot == 0 ? new Color(0.2f, 1f, 0.5f) : new Color(0.7f, 0.7f, 0.7f);
+                if (GUI.Button(new Rect(barX + 4, barY + 3, (barW - 12) * 0.5f, barH - 6), $"★ S1: {slot1Name}") && pc != null) pc.SelectSlot(0);
+                GUI.color = activeSlot == 1 ? new Color(0.2f, 1f, 0.5f) : new Color(0.7f, 0.7f, 0.7f);
+                if (GUI.Button(new Rect(barX + (barW - 12) * 0.5f + 8, barY + 3, (barW - 12) * 0.5f, barH - 6), $"★ S2: {slot2Name}") && pc != null) pc.SelectSlot(1);
+                GUI.color = Color.white;
+            }
+
+            // 8. Evac / Wave Banner (Top Center)
             if (ExtractionZone.Instance != null && ExtractionZone.Instance.IsActive && !ExtractionZone.Instance.IsExtracted)
             {
-                GUI.Box(new Rect(Screen.width / 2 - 210, 20, 420, 34), "");
+                GUI.Box(new Rect(Screen.width / 2 - 210, 34, 420, 34), "");
                 GUI.color = ExtractionZone.Instance.IsPlayerInside ? new Color(0.2f, 1f, 0.4f) : new Color(0.2f, 0.9f, 1f);
                 string evacText = ExtractionZone.Instance.IsPlayerInside ? $"EXTRACTING: {ExtractionZone.Instance.CurrentHoldTime:F1}s / {ExtractionZone.Instance.RequiredHoldTime:F1}s (HOLD!)" : "EVAC SHIP AT CENTER! HOLD 5s TO EXTRACT";
-                GUI.Label(new Rect(Screen.width / 2 - 200, 26, 400, 24), evacText);
+                GUI.Label(new Rect(Screen.width / 2 - 200, 40, 400, 24), evacText);
                 GUI.color = Color.white;
             }
             else if (WaveManager.Instance != null && isIntermission)
             {
-                GUI.Box(new Rect(Screen.width / 2 - 180, 20, 360, 36), "");
+                GUI.Box(new Rect(Screen.width / 2 - 180, 34, 360, 36), "");
                 GUI.color = new Color(0.2f, 1f, 0.4f);
-                GUI.Label(new Rect(Screen.width / 2 - 170, 26, 340, 25), $"WAVE CLEARED! NEXT HORDE IN: {WaveManager.Instance.IntermissionTimer:F1}s");
+                GUI.Label(new Rect(Screen.width / 2 - 170, 40, 340, 25), $"WAVE CLEARED! NEXT IN: {WaveManager.Instance.IntermissionTimer:F1}s");
                 GUI.color = Color.white;
             }
 
-            // 8. Modals
-            if (isShopOpen) DrawUpgradeShop(credits);
-            if (isPaused) DrawPauseMenu();
+            if (isShopOpen) DrawUpgradeShop(credits, isMobile);
+            if (isPaused) DrawPauseMenu(isMobile);
 
             bool isGameOver = (playerHealth != null && playerHealth.IsDead) || (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.GameOver);
             bool isVictory = GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.Victory;
@@ -153,7 +175,7 @@ namespace Deadzone.UI
             GUI.color = oldColor;
         }
 
-        private void DrawPauseMenu()
+        private void DrawPauseMenu(bool isMobile)
         {
             float pW = 380, pH = 220, pX = (Screen.width - pW) * 0.5f, pY = (Screen.height - pH) * 0.5f;
             GUI.Box(new Rect(pX, pY, pW, pH), "");
@@ -162,58 +184,62 @@ namespace Deadzone.UI
             GUI.Label(new Rect(pX + 20, pY + 16, pW - 40, 25), "=== TACTICAL PAUSE ===");
             GUI.color = Color.white;
 
-            if (GUI.Button(new Rect(pX + 30, pY + 55, pW - 60, 36), "RESUME MISSION  [ESC]")) TogglePause();
-            if (GUI.Button(new Rect(pX + 30, pY + 105, pW - 60, 36), "RESTART RUN  [R]")) { TogglePause(); OnRestartButtonClicked(); }
-            if (GUI.Button(new Rect(pX + 30, pY + 155, pW - 60, 36), "QUIT TO DESKTOP")) Application.Quit();
+            string resumeText = isMobile ? "RESUME MISSION" : "RESUME MISSION  [ESC]";
+            string restartText = isMobile ? "RESTART RUN" : "RESTART RUN  [R]";
+            if (GUI.Button(new Rect(pX + 30, pY + 55, pW - 60, 36), resumeText)) TogglePause();
+            if (GUI.Button(new Rect(pX + 30, pY + 105, pW - 60, 36), restartText)) { TogglePause(); OnRestartButtonClicked(); }
+            if (GUI.Button(new Rect(pX + 30, pY + 155, pW - 60, 36), isMobile ? "QUIT GAME" : "QUIT TO DESKTOP")) Application.Quit();
         }
 
-        private void DrawUpgradeShop(int credits)
+        private void DrawUpgradeShop(int credits, bool isMobile)
         {
             float pW = 460, pH = 290, pX = (Screen.width - pW) * 0.5f, pY = (Screen.height - pH) * 0.5f;
             GUI.Box(new Rect(pX, pY, pW, pH), "");
             GUI.Box(new Rect(pX + 4, pY + 4, pW - 8, pH - 8), "");
             GUI.color = new Color(0.2f, 0.9f, 1.0f);
-            GUI.Label(new Rect(pX + 20, pY + 16, pW - 40, 25), $"=== FIELD UPGRADE TERMINAL ===   [CREDITS: {credits}]");
+            GUI.Label(new Rect(pX + 20, pY + 16, pW - 40, 25), $"=== FIELD UPGRADES ===   [CREDITS: {credits}]");
             GUI.color = Color.white;
 
             DrawPerkButton(pX + 20, pY + 48, pW - 40, PerkType.DamageBoost, "+20% Bullet Damage", 40, credits);
             DrawPerkButton(pX + 20, pY + 92, pW - 40, PerkType.SpeedBoost, "+15% Movement Speed", 30, credits);
-            DrawPerkButton(pX + 20, pY + 136, pW - 40, PerkType.HealthBoost, "+35 Max HP & Instant Heal", 35, credits);
-            DrawPerkButton(pX + 20, pY + 180, pW - 40, PerkType.FireRateBoost, "+25% Weapon Fire Rate", 45, credits);
-            DrawPerkButton(pX + 20, pY + 224, pW - 40, PerkType.DashCooldownBoost, "-20% Dash Cooldown", 30, credits);
+            DrawPerkButton(pX + 20, pY + 136, pW - 40, PerkType.HealthBoost, "+35 Max HP & Full Heal", 50, credits);
+            DrawPerkButton(pX + 20, pY + 180, pW - 40, PerkType.FireRateBoost, "+25% Fire Rate", 45, credits);
+            DrawPerkButton(pX + 20, pY + 224, pW - 40, PerkType.DashCooldown, "-20% Dash Cooldown", 35, credits);
+
+            if (GUI.Button(new Rect(pX + pW - 100, pY + 14, 85, 24), "CLOSE ✕")) isShopOpen = false;
         }
 
-        private void DrawPerkButton(float x, float y, float w, PerkType type, string desc, int cost, int credits)
+        private void DrawPerkButton(float x, float y, float w, PerkType type, string name, int cost, int currentCredits)
         {
-            bool canAfford = credits >= cost;
-            GUI.color = canAfford ? Color.white : new Color(0.6f, 0.6f, 0.6f);
-            string label = $"{desc}  ({cost} Credits)";
-            if (GUI.Button(new Rect(x, y, w, 38), label) && canAfford && PlayerPerks.Instance != null)
-                PlayerPerks.Instance.TryPurchaseUpgrade(type, cost);
+            bool canAfford = currentCredits >= cost;
+            GUI.color = canAfford ? Color.white : new Color(0.6f, 0.6f, 0.6f, 0.8f);
+            if (GUI.Button(new Rect(x, y, w, 38), $"{name}  ({cost} Credits)") && canAfford && PlayerPerks.Instance != null && GameManager.Instance != null)
+            {
+                if (GameManager.Instance.SpendCredits(cost)) PlayerPerks.Instance.UpgradePerk(type);
+            }
             GUI.color = Color.white;
         }
 
         private void DrawEndModal(string title, string subtitle, Color headerColor, int wave, int kills, int credits)
         {
-            float pW = 460, pH = 260, pX = (Screen.width - pW) * 0.5f, pY = (Screen.height - pH) * 0.5f;
-            GUI.Box(new Rect(pX, pY, pW, pH), "");
-            GUI.Box(new Rect(pX + 4, pY + 4, pW - 8, pH - 8), "");
+            float mW = 440, mH = 240, mX = (Screen.width - mW) * 0.5f, mY = (Screen.height - mH) * 0.5f;
+            GUI.Box(new Rect(mX, mY, mW, mH), "");
+            GUI.Box(new Rect(mX + 4, mY + 4, mW - 8, mH - 8), "");
             GUI.color = headerColor;
-            GUI.Label(new Rect(pX + 20, pY + 20, pW - 40, 30), title);
+            GUI.Label(new Rect(mX + 20, mY + 20, mW - 40, 25), title);
             GUI.color = Color.white;
-            GUI.Label(new Rect(pX + 20, pY + 55, pW - 40, 22), subtitle);
-            GUI.Label(new Rect(pX + 20, pY + 80, pW - 40, 22), $"WAVES: {wave}   |   KILLS: {kills}   |   RUN CREDITS: {credits}");
+            GUI.Label(new Rect(mX + 20, mY + 48, mW - 40, 22), subtitle);
+            GUI.Label(new Rect(mX + 20, mY + 75, mW - 40, 22), $"WAVES SURVIVED: {wave}   |   KILLS: {kills}");
+            GUI.Label(new Rect(mX + 20, mY + 100, mW - 40, 22), $"TOTAL CREDITS EARNED: {credits}");
 
-            int banked = OutpostStashManager.Instance != null ? OutpostStashManager.Instance.BankedCredits : credits;
-            int totalEvacs = OutpostStashManager.Instance != null ? OutpostStashManager.Instance.SuccessfulExtractions : 1;
-            GUI.color = new Color(0.2f, 1f, 0.5f);
-            GUI.Label(new Rect(pX + 20, pY + 105, pW - 40, 22), $"OUTPOST STASH: {banked} CREDITS   |   LIFETIME EVACS: {totalEvacs}");
-
-            GUI.color = new Color(0.2f, 0.95f, 0.35f);
-            if (GUI.Button(new Rect(pX + 50, pY + 145, pW - 100, 50), "NEW DEPLOYMENT  [SPACE / CLICK]")) OnRestartButtonClicked();
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.R)) OnRestartButtonClicked();
+            if (GUI.Button(new Rect(mX + 30, mY + 140, mW - 60, 38), "DEPLOY AGAIN")) OnRestartButtonClicked();
+            if (GUI.Button(new Rect(mX + 30, mY + 185, mW - 60, 36), "EXIT")) Application.Quit();
         }
 
-        public void OnRestartButtonClicked() => GameManager.Instance?.RestartGame();
+        private void OnRestartButtonClicked()
+        {
+            Time.timeScale = 1f;
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+        }
     }
 }
