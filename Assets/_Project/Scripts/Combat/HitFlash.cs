@@ -17,17 +17,37 @@ namespace Deadzone.Combat
         private List<Color> originalColors = new List<Color>();
         private Coroutine flashRoutine;
 
+        private MaterialPropertyBlock propBlock;
+        public static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        public static readonly int ColorId = Shader.PropertyToID("_Color");
+
         private void Awake()
         {
             health = GetComponent<Health>();
+            CacheRenderersAndColors();
+        }
 
-            // Collect all renderers on this entity
+        public void CacheRenderersAndColors()
+        {
+            renderers.Clear();
+            originalColors.Clear();
             GetComponentsInChildren(true, renderers);
             foreach (var r in renderers)
             {
-                if (r != null && r.sharedMaterial != null && r.sharedMaterial.HasProperty("_Color"))
+                if (r != null && r.sharedMaterial != null)
                 {
-                    originalColors.Add(r.sharedMaterial.color);
+                    if (r.sharedMaterial.HasProperty(BaseColorId))
+                    {
+                        originalColors.Add(r.sharedMaterial.GetColor(BaseColorId));
+                    }
+                    else if (r.sharedMaterial.HasProperty(ColorId))
+                    {
+                        originalColors.Add(r.sharedMaterial.GetColor(ColorId));
+                    }
+                    else
+                    {
+                        originalColors.Add(Color.white);
+                    }
                 }
                 else
                 {
@@ -38,7 +58,7 @@ namespace Deadzone.Combat
 
         private void Start()
         {
-            health.OnHealthChanged += HandleHealthChanged;
+            if (health != null) health.OnHealthChanged += HandleHealthChanged;
         }
 
         private void OnDestroy()
@@ -46,17 +66,13 @@ namespace Deadzone.Combat
             if (health != null) health.OnHealthChanged -= HandleHealthChanged;
         }
 
-        private MaterialPropertyBlock propBlock;
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static readonly int ColorId = Shader.PropertyToID("_Color");
-
         private void HandleHealthChanged(float current, float max)
         {
             if (flashRoutine != null) StopCoroutine(flashRoutine);
             flashRoutine = StartCoroutine(DoFlash());
         }
 
-        private IEnumerator DoFlash()
+        public void ApplyFlashColors(Color c)
         {
             if (propBlock == null) propBlock = new MaterialPropertyBlock();
 
@@ -65,17 +81,36 @@ namespace Deadzone.Combat
                 if (renderers[i] != null)
                 {
                     renderers[i].GetPropertyBlock(propBlock);
-                    propBlock.SetColor(BaseColorId, flashColor);
-                    propBlock.SetColor(ColorId, flashColor);
+                    propBlock.SetColor(BaseColorId, c);
+                    propBlock.SetColor(ColorId, c);
                     renderers[i].SetPropertyBlock(propBlock);
                 }
             }
+        }
+
+        public void FlashImmediateForTest()
+        {
+            ApplyFlashColors(flashColor);
+        }
+
+        public Color GetCurrentPropertyBlockColor(Renderer rend, int propertyId)
+        {
+            if (rend == null) return Color.clear;
+            MaterialPropertyBlock block = new MaterialPropertyBlock();
+            rend.GetPropertyBlock(block);
+            return block.GetColor(propertyId);
+        }
+
+        private IEnumerator DoFlash()
+        {
+            ApplyFlashColors(flashColor);
 
             yield return new WaitForSeconds(flashDuration);
 
+            if (propBlock == null) propBlock = new MaterialPropertyBlock();
             for (int i = 0; i < renderers.Count; i++)
             {
-                if (renderers[i] != null)
+                if (renderers[i] != null && i < originalColors.Count)
                 {
                     renderers[i].GetPropertyBlock(propBlock);
                     propBlock.SetColor(BaseColorId, originalColors[i]);

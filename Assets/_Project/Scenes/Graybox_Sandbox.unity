@@ -273,10 +273,7 @@ MonoBehaviour:
   rotationSpeed: 15
   gravity: -20
   equippedWeapon: {fileID: 1002005}
-  assaultRifleData: {fileID: 11400000, guid: 9700eb9f4ee33ed40815a4b92b66aa25, type: 2}
-  shotgunData: {fileID: 11400000, guid: 67d13d9ec8a7145439cf29993ae2cb54, type: 2}
-  smgData: {fileID: 11400000, guid: dd6277c94f067504ea3e804c97732081, type: 2}
-  sniperData: {fileID: 11400000, guid: 55a1f0a2e5b746819c43d8a9e102f744, type: 2}
+  starterWeaponData: {fileID: 0}
 --- !u!114 &1001007
 MonoBehaviour:
   m_ObjectHideFlags: 0

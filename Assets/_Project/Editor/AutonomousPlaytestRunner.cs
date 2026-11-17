@@ -19,6 +19,9 @@ namespace Deadzone.Editor
             Debug.Log("[AUTONOMOUS PLAYTEST RUNNER] Starting Suite...");
             Debug.Log("==================================================");
 
+            UrpSetupHelper.SetupMobileUrpAndConvert();
+            PipelineMetricsProbe.MeasureSceneMetrics();
+
             int testsPassed = 0;
             int totalTests = 14;
 

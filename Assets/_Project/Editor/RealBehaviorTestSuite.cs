@@ -21,7 +21,7 @@ namespace Deadzone.Editor
             UnityEngine.Debug.Log("==================================================");
 
             int passed = 0;
-            int total = 8;
+            int total = 9;
 
             if (Test_NoiseAlertRadius()) passed++;
             if (Test_FriendlyFireImmunity()) passed++;
@@ -31,6 +31,7 @@ namespace Deadzone.Editor
             if (Test_CPUFrameTimeAndEnemyCountProbe()) passed++;
             if (Test_HybridLoadoutAndInputSeam()) passed++;
             if (Test_MuzzleFlashLightPoolCap()) passed++;
+            if (Test_HitFlashShaderColorPropertyChange()) passed++;
 
             UnityEngine.Debug.Log("==================================================");
             UnityEngine.Debug.Log($"[REAL BEHAVIOR RESULTS] {passed}/{total} REAL BEHAVIOR Tests Passed ({(passed == total ? "100% SUCCESS" : "FAILED")})");
@@ -405,6 +406,48 @@ namespace Deadzone.Editor
 
             UnityEngine.Debug.Log($"[REAL TEST 6 PASSED] CPU Frame-Time Probe: {enemyCount} active enemy transforms over {framesToSimulate} ticks | Avg: {avgMs:F3} ms/tick | Min: {minMs:F3} ms | Max: {maxMs:F3} ms");
             return true;
+        }
+
+        public static bool Test_HitFlashShaderColorPropertyChange()
+        {
+            GameObject testEntity = new GameObject("Test_HitFlashEntity");
+            Health h = testEntity.AddComponent<Health>();
+            h.Initialize(100f);
+
+            GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            visual.transform.SetParent(testEntity.transform);
+            Renderer r = visual.GetComponent<Renderer>();
+
+            Shader litShader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            Material testMat = new Material(litShader);
+            Color initialColor = Color.blue;
+            if (testMat.HasProperty(HitFlash.BaseColorId)) testMat.SetColor(HitFlash.BaseColorId, initialColor);
+            if (testMat.HasProperty(HitFlash.ColorId)) testMat.SetColor(HitFlash.ColorId, initialColor);
+            r.sharedMaterial = testMat;
+
+            HitFlash flash = testEntity.AddComponent<HitFlash>();
+            flash.CacheRenderersAndColors();
+
+            flash.FlashImmediateForTest();
+
+            Color blockBaseColor = flash.GetCurrentPropertyBlockColor(r, HitFlash.BaseColorId);
+            Color blockStandardColor = flash.GetCurrentPropertyBlockColor(r, HitFlash.ColorId);
+
+            bool passed = (blockBaseColor == Color.white || blockStandardColor == Color.white);
+
+            Object.DestroyImmediate(visual);
+            Object.DestroyImmediate(testEntity);
+            Object.DestroyImmediate(testMat);
+
+            if (passed)
+            {
+                UnityEngine.Debug.Log($"[REAL TEST 9 PASSED] HitFlash Shader Color Property: Property block successfully changed color to White on active shader ({litShader.name}).");
+            }
+            else
+            {
+                UnityEngine.Debug.LogError($"[REAL TEST 9 FAILED] HitFlash color mismatch: BaseColor={blockBaseColor}, Color={blockStandardColor}");
+            }
+            return passed;
         }
     }
 }
