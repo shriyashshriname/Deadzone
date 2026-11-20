@@ -195,6 +195,18 @@ namespace Deadzone.Core
                 var gun = Deadzone.Combat.WeaponPickup.RollWeapon(isBoss ? 0.9f : (futuristicEnemy ? 0.45f : 0.1f), futuristicEnemy || isBoss);
                 Deadzone.Combat.WeaponPickup.Spawn(gun, pos + Vector3.forward * 0.6f);
             }
+            // Salvage for the backpack: robots carry tech, infected carry bio samples; bosses drop a pile.
+            float salvageChance = isBoss ? 1f : (futuristicEnemy ? 0.45f : 0.14f);
+            if (UnityEngine.Random.value < salvageChance && gemPickupPrefab)
+            {
+                int n = isBoss ? 3 : 1;
+                for (int s = 0; s < n; s++)
+                {
+                    var go = Instantiate(gemPickupPrefab, dropPos + new Vector3(UnityEngine.Random.Range(-0.9f, 0.9f), 0f, UnityEngine.Random.Range(-0.9f, 0.9f)), Quaternion.identity);
+                    if (go.TryGetComponent<LootDrop>(out var ld))
+                        ld.Configure(PickupType.Salvage, 1f, futuristicEnemy || isBoss ? ItemKind.TechScrap : ItemKind.BioSample);
+                }
+            }
             if (isBoss)
             {
                 if (healthPickupPrefab) Instantiate(healthPickupPrefab, dropPos + Vector3.left * 0.8f, Quaternion.identity);

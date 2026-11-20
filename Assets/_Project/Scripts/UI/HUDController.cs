@@ -196,7 +196,7 @@ namespace Deadzone.UI
 
         private void DrawUpgradeShop(int credits, bool isMobile)
         {
-            float pW = 460, pH = 290, pX = (Screen.width - pW) * 0.5f, pY = (Screen.height - pH) * 0.5f;
+            float pW = 460, pH = 334, pX = (Screen.width - pW) * 0.5f, pY = (Screen.height - pH) * 0.5f;
             GUI.Box(new Rect(pX, pY, pW, pH), "");
             GUI.Box(new Rect(pX + 4, pY + 4, pW - 8, pH - 8), "");
             GUI.color = new Color(0.2f, 0.9f, 1.0f);
@@ -208,8 +208,29 @@ namespace Deadzone.UI
             DrawPerkButton(pX + 20, pY + 136, pW - 40, PerkType.HealthBoost, "+35 Max HP & Full Heal", 50, credits);
             DrawPerkButton(pX + 20, pY + 180, pW - 40, PerkType.FireRateBoost, "+25% Fire Rate", 45, credits);
             DrawPerkButton(pX + 20, pY + 224, pW - 40, PerkType.DashCooldownBoost, "-20% Dash Cooldown", 35, credits);
+            DrawBackpackUpgrade(pX + 20, pY + 268, pW - 40, credits);
 
             if (GUI.Button(new Rect(pX + pW - 100, pY + 14, 85, 24), "CLOSE ✕")) isShopOpen = false;
+        }
+
+        private void DrawBackpackUpgrade(float x, float y, float w, int credits)
+        {
+            var bag = Backpack.Instance;
+            if (bag == null) return;
+            if (bag.IsMaxTier)
+            {
+                GUI.color = new Color(0.6f, 0.9f, 1f);
+                GUI.Box(new Rect(x, y, w, 38), $"BACKPACK MAXED ({bag.Capacity} slots)");
+                GUI.color = Color.white;
+                return;
+            }
+            int cost = bag.NextUpgradeCost;
+            bool canAfford = credits >= cost;
+            GUI.color = canAfford ? new Color(0.6f, 0.95f, 1f) : new Color(0.6f, 0.6f, 0.6f, 0.8f);
+            int next = Backpack.TierSlots[bag.Tier + 1];
+            if (GUI.Button(new Rect(x, y, w, 38), $"BACKPACK {bag.Capacity} → {next} SLOTS — permanent  ({cost} Credits)") && canAfford)
+                bag.TryUpgrade();
+            GUI.color = Color.white;
         }
 
         private void DrawPerkButton(float x, float y, float w, PerkType type, string name, int cost, int currentCredits)

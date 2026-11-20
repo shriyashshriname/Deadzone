@@ -151,4 +151,9 @@ enemies = 1–2 zombie types + Quaternius robots + dark monsters (no cartoon mon
 - Helipad + dropship: insertion at run start; evac fly-in + landing when extraction unlocks; boarding + take-off
   before the debrief.
 
-**M1 remaining:** upgradeable backpack ("storage") with carried consumables; ammo per weapon; pickup prompt UI.
+**M1 backpack (Build #5):** `Backpack` on the player — 4 slots, permanent upgrades to 6/8/10 in the field shop
+(150/300/500 cr, saved in the stash). Medkits (x3/slot) and ammo packs (x2) are carried and used from the HUD bar
+(tap) or H/J; pickups auto-use only when badly hurt / low on ammo. Salvage (Tech Scrap 25 cr from robots, Bio Sample
+15 cr from infected, piles from bosses) is cashed in on extraction and lost on death. Test 14 covers it.
+
+**M1 remaining (small):** per-weapon ammo reserves; pickup prompt UI.

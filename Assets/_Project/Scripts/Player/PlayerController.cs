@@ -42,6 +42,7 @@ namespace Deadzone.Player
 
             controller = GetComponent<CharacterController>();
             health = GetComponent<Health>();
+            if (GetComponent<Backpack>() == null) gameObject.AddComponent<Backpack>();
             playerDash = GetComponent<PlayerDash>();
             playerAbilities = GetComponent<PlayerAbilities>();
 

@@ -110,6 +110,7 @@ namespace Deadzone.Core
 
         private void FinishExtraction()
         {
+            if (Backpack.Instance != null) Backpack.Instance.BankSalvage();
 
             int credits = GameManager.Instance != null ? GameManager.Instance.CreditsEarned : 0;
             int kills = GameManager.Instance != null ? GameManager.Instance.KillCount : 0;

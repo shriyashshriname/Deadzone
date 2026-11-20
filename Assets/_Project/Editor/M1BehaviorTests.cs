@@ -60,5 +60,32 @@ namespace Deadzone.Editor
             Object.DestroyImmediate(playerGo);
             return ok;
         }
+
+        /// <summary>Backpack: stacking, capacity limit, medkit use heals and consumes, salvage value, tier upgrade adds slots.</summary>
+        public static bool Test_BackpackCapacityStackingAndUse()
+        {
+            var go = new GameObject("Test_Backpack");
+            var hp = go.AddComponent<Health>();
+            hp.Initialize(100f);
+            var bag = go.AddComponent<Backpack>();
+
+            bool stacked = bag.TryAdd(ItemKind.Medkit, 2) && bag.UsedSlots == 1;               // 2 medkits share a slot
+            bag.TryAdd(ItemKind.TechScrap, 5);                                                   // slot 2 (full stack)
+            bag.TryAdd(ItemKind.BioSample, 3);                                                   // slot 3
+            bag.TryAdd(ItemKind.AmmoPack, 1);                                                    // slot 4 -> bag full (4 slots)
+            bool fullRejects = !bag.TryAdd(ItemKind.TechScrap, 1) && bag.UsedSlots == 4;        // no room for a 6th scrap
+            bool topUpWorks = bag.TryAdd(ItemKind.Medkit, 1);                                    // tops up the medkit stack to 3
+            int value = bag.SalvageValue;                                                        // 5*25 + 3*15 = 170
+            hp.TakeDamage(60f);
+            bool healed = bag.UseFirst(ItemKind.Medkit) && Mathf.Approximately(hp.CurrentHealth, 90f) && bag.Slots[0].count == 2;
+            bag.SetTier(1);
+            bool upgraded = bag.Capacity == 6 && bag.TryAdd(ItemKind.TechScrap, 1);
+
+            bool ok = stacked && fullRejects && topUpWorks && value == 170 && healed && upgraded;
+            if (ok) Debug.Log("[REAL TEST 14 PASSED] Backpack: stacks share slots, full 4-slot bag rejects new items, medkit heals 40->90 and is consumed, salvage worth 170 cr, tier upgrade opens 6 slots.");
+            else Debug.LogError($"[REAL TEST 14 FAILED] Stacked={stacked} FullRejects={fullRejects} TopUp={topUpWorks} Value={value} Healed={healed} (HP {hp.CurrentHealth}) Upgraded={upgraded}");
+            Object.DestroyImmediate(go);
+            return ok;
+        }
     }
 }

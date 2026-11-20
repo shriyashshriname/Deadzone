@@ -17,6 +17,7 @@ namespace Deadzone.Core
         public int lifetimeKills = 0;
         public int permanentHealthBonus = 0;
         public int permanentDamageBonus = 0;
+        public int backpackTier = 0;          // M1 backpack capacity tier (0..3)
     }
 
     public class OutpostStashManager : MonoBehaviour

@@ -2,6 +2,7 @@ using UnityEngine;
 using Deadzone.Core;
 using Deadzone.Combat;
 using Deadzone.Player;
+using Deadzone.UI;
 
 namespace Deadzone.Core
 {
@@ -9,7 +10,8 @@ namespace Deadzone.Core
     {
         Health,
         Ammo,
-        Gems
+        Gems,
+        Salvage
     }
 
     [RequireComponent(typeof(Collider))]
@@ -20,8 +22,25 @@ namespace Deadzone.Core
         [SerializeField] private float amount = 35f;
         [SerializeField] private float bobSpeed = 3f;
         [SerializeField] private float rotateSpeed = 90f;
+        [SerializeField] private ItemKind salvageKind = ItemKind.BioSample;
+
+        /// <summary>Turns this drop into another kind at runtime (used for salvage spawned from the gem prefab).</summary>
+        public void Configure(PickupType type, float value, ItemKind kind)
+        {
+            pickupType = type; amount = value; salvageKind = kind;
+            var block = new MaterialPropertyBlock();
+            Color c = Backpack.ColorOf(kind);
+            foreach (var r in GetComponentsInChildren<Renderer>())
+            {
+                r.GetPropertyBlock(block);
+                block.SetColor("_BaseColor", c);
+                block.SetColor("_EmissionColor", c * 1.5f);
+                r.SetPropertyBlock(block);
+            }
+        }
 
         private Vector3 startPos;
+        private static float nextFullWarning;
 
         private void Start()
         {
@@ -42,30 +61,36 @@ namespace Deadzone.Core
             if (!other.CompareTag("Player")) return;
 
             bool collected = false;
-
+            var bag = other.GetComponent<Backpack>();
             if (pickupType == PickupType.Health)
             {
-                if (other.TryGetComponent<Health>(out var hp) && hp.CurrentHealth < hp.MaxHealth)
+                // Badly hurt: heal on the spot. Otherwise stash a medkit; full bag + hurt: heal anyway.
+                if (other.TryGetComponent<Health>(out var hp))
                 {
-                    hp.Heal(amount);
-                    collected = true;
+                    bool hurt = hp.CurrentHealth < hp.MaxHealth;
+                    if (hurt && hp.CurrentHealth < hp.MaxHealth * 0.6f) { hp.Heal(amount); collected = true; }
+                    else if (bag != null && bag.TryAdd(ItemKind.Medkit)) { collected = true; KillFeedUI.PostMessage("+ MEDKIT stored", Palette.Health); }
+                    else if (hurt) { hp.Heal(amount); collected = true; }
                 }
             }
             else if (pickupType == PickupType.Ammo)
             {
                 var weapon = other.GetComponentInChildren<Weapon>();
-                if (weapon != null)
-                {
-                    weapon.RefillInstant();
-                    collected = true;
-                }
+                bool low = weapon != null && weapon.Data != null && weapon.CurrentAmmo < weapon.Data.magazineCapacity * 0.35f;
+                if (low) { weapon.RefillInstant(); collected = true; }
+                else if (bag != null && bag.TryAdd(ItemKind.AmmoPack)) { collected = true; KillFeedUI.PostMessage("+ AMMO PACK stored", Palette.Ammo); }
+                else if (weapon != null) { weapon.RefillInstant(); collected = true; }
             }
             else if (pickupType == PickupType.Gems)
             {
                 if (GameManager.Instance != null) GameManager.Instance.AddCredits((int)amount);
                 collected = true;
             }
-
+            else if (pickupType == PickupType.Salvage)
+            {
+                if (bag != null && bag.TryAdd(salvageKind)) collected = true;
+                else if (Time.time > nextFullWarning) { nextFullWarning = Time.time + 3f; KillFeedUI.PostMessage("BACKPACK FULL — upgrade capacity in the shop", Palette.Danger); }
+            }
             if (collected)
             {
                 if (AudioManager.Instance != null) AudioManager.Instance.PlayPickup();
