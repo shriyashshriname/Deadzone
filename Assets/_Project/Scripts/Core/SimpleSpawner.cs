@@ -18,7 +18,7 @@ namespace Deadzone.Core
             if (!enemyPrefab || Time.time < nextSpawnTime) return;
 
             // Check how many enemies exist
-            int currentEnemies = FindObjectsByType<Deadzone.Enemies.ZombieEnemy>(FindObjectsSortMode.None).Length;
+            int currentEnemies = FindObjectsByType<Deadzone.Enemies.ZombieEnemy>().Length;
             if (currentEnemies >= maxEnemies) return;
 
             SpawnEnemy();

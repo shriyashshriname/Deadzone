@@ -56,7 +56,7 @@ namespace Deadzone.Player
         {
             if (Application.isMobilePlatform || Deadzone.UI.MobileControlsManager.ForceMobileInEditor)
             {
-                var mgr = FindFirstObjectByType<Deadzone.UI.MobileControlsManager>();
+                var mgr = FindAnyObjectByType<Deadzone.UI.MobileControlsManager>();
                 if (mgr == null)
                 {
                     GameObject go = new GameObject("MobileControlsManager");

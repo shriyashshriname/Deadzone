@@ -28,7 +28,7 @@ namespace Deadzone.UI
             // Auto-detect boss in scene if not assigned
             if (activeBoss == null)
             {
-                var foundBoss = FindFirstObjectByType<BossBrute>();
+                var foundBoss = FindAnyObjectByType<BossBrute>();
                 if (foundBoss != null)
                 {
                     BindBoss(foundBoss);

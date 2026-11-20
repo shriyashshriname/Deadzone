@@ -23,7 +23,7 @@ namespace Deadzone.Core
         private static ExtractionZone instance;
         public static ExtractionZone Instance
         {
-            get => instance != null ? instance : (instance = FindFirstObjectByType<ExtractionZone>());
+            get => instance != null ? instance : (instance = FindAnyObjectByType<ExtractionZone>());
             set => instance = value;
         }
 

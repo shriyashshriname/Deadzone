@@ -1,0 +1,108 @@
+# DEADZONE — Next Steps & Roadmap (Claude review, 2026-11-20)
+
+Companion to `ROADMAP_GATES.md` (the gates stay the source of truth). This file is the
+ordered plan for getting from today's state to a real Gate 4 vertical slice.
+
+## 1. Where the project actually is
+
+| Area | State | Evidence |
+|---|---|---|
+| Engine | Unity 6000.6.9f1, URP 17.6, Input System, AI Navigation | `ProjectSettings/ProjectVersion.txt`, `Packages/manifest.json` |
+| Code | ~9,000 lines C#, 60+ scripts, clean namespaces, ≤250-line rule mostly held | `Assets/_Project/Scripts/**` |
+| Systems built | Noise/swarm AI, 4 weapons, 4 enemy types + 2 bosses, waves, DBNO/revive, extraction, vault, substations, airdrops, perks, upgrade terminal, AI squadmate + rival bots, mobile twin-stick, save v2 + migration, juice (hit-stop, shake), URP post (bloom/vignette/fog) | `Docs/Team/BOARD.md`, git log |
+| Tests | 11 real-behavior tests pass; the separate 14-check suite is honestly 6 real / 8 smoke | `playtest_honesty.log` |
+| Builds | Windows x64 (99.9 MB) and Android APK (58.4 MB) build headless | `Builds/` |
+| Art | **Programmer art.** 6 OBJ models built from axis-aligned boxes (operator = 252 tris, no rig, no textures, no animation). One graybox scene | `Art/Models/**`, `scripts/generate_3d_assets.py` |
+| Audio | Procedural synth only | D-021 |
+| Validation | **Zero human playtests.** Phone smoke test and 5-player Gate 4 test both still open | `Docs/Team/HUMAN_TODO.md` |
+
+## 2. Problems to fix first
+
+1. **Scope drift past the gates (risk R-01).** BOARD says "Gate 5 in progress" while every Gate 2–4
+   checkbox needing a human is unchecked. Rival bots, AI squadmate, airdrops, perks, turrets, daily
+   rewards and a 4th weapon were added beyond the agreed first slice. Freeze features until a human
+   has played.
+2. **The game has never been played by a person.** Automated tests prove systems run, not that
+   Noise is fun. This is the single most important gap.
+3. **Characters can't be animated.** OBJ files carry no skeleton. Every character needs to move to
+   a rigged FBX/GLB pipeline before any animation work.
+4. **Engine is on a staging Tech Stream build** (D-023). Fine for prototyping; pick an LTS before Gate 6.
+5. **Housekeeping:** 8 uncommitted Unity API-updater edits (`FindFirstObjectByType` → `FindAnyObjectByType`);
+   multi-MB logs in the project root (gitignored, but clutter); a `[STASH] JSON parse error` line in the
+   honesty log worth checking against a real save file.
+
+## 3. Roadmap
+
+### Phase A — Stabilise & play (now, ~1 week)
+- [ ] Commit the API-updater changes; move `*.log` into `Logs/`.
+- [ ] Founder plays 3 full runs on the phone (HUMAN_TODO §2). Write notes in `Docs/QA/`.
+- [ ] Decide what to **cut** for the slice: keep the original slice (1 map, 1 character, AR/shotgun/SMG,
+      Crawler/Brute/Spitter, Crawler King, extraction). Park squadmate, rivals, turrets, daily rewards behind flags.
+- [ ] Tune Noise until shots visibly pull enemies (Gate 2 box).
+
+### Phase B — Art foundation (parallel with A, ~1–2 weeks)
+- [ ] Approve the art bible (§4) and add `Palette.cs` as the single colour source.
+- [ ] Install Blender (done by Claude 2026-11-20 via winget) and verify `blender --background` works.
+- [ ] Character pipeline: rigged humanoid → FBX → Unity Humanoid Avatar → Animator
+      (idle / run / aim-run / shoot / reload / downed / death). See §5.
+- [ ] Enemy pipeline: same rig standard; walker, runner, spitter, brute variants via mesh/material swaps.
+- [ ] Environment kit: modular walls, floor tiles, doors, crates, barrels, barriers, lights (≤ contract budgets).
+
+### Phase C — Visual pass (~2 weeks)
+- [ ] Lighting: one key directional + baked ambient + emissive emergency strobes; palette-tinted fog.
+- [ ] Rebuild the research-facility map from the kit (replace graybox).
+- [ ] VFX: muzzle flash, tracers, blood/acid hits, shell casings, dust — pooled.
+- [ ] Readability check from the 55°/14 m camera: player, enemies, pickups distinct at a glance.
+- [ ] Mobile perf budget: ≥30 fps on the founder's phone with 35 enemies.
+
+### Phase D — Gate 4 close (~1–2 weeks)
+- [ ] Audio pass (CC0 packs replacing synth where it matters: guns, hits, zombie barks).
+- [ ] Tutorial + HUD polish; TMP fonts styled to the bible.
+- [ ] 5 outside players; ≥3 say they'd play another run. **Only then** move to Gate 5.
+
+### Later (unchanged from ROADMAP_GATES)
+Gate 5 content alpha → Gate 6 beta (LTS migration here) → Gate 7 RC → Gate 8 launch → co-op.
+
+## 4. Art bible (draft — founder to approve)
+
+Derived from the founder's existing choices in `ASSET_CONTRACT_GATE1.md` and `CLAUDE_REVIEW_NOTES.md`.
+
+1. **Style:** Grounded low-poly outbreak — chunky, readable silhouettes, flat/lightly-textured
+   materials, desaturated industrial world broken by saturated gameplay cues.
+2. **Palette:**
+   | Role | Hex | Name |
+   |---|---|---|
+   | Floor | `#3B3D3A` | stained concrete |
+   | Walls / structure | `#55595A` | gunmetal |
+   | Operator primary | `#4F5A3C` | olive drab |
+   | Operator secondary | `#B8A47A` | coyote tan |
+   | Infected skin | `#8A9479` | sickly grey-green |
+   | Props | `#C9A227` | hazard yellow |
+   | Shadow | `#1D2228` | cold blue-black |
+   | Accent — health | `#2ECC71` | emerald |
+   | Accent — ammo | `#F5A623` | amber |
+   | Accent — objective | `#22D3EE` | cyan |
+   | Accent — danger/acid | `#D7263D` | crimson |
+3. **Mood:** night-time facility on emergency power — cool moonlight key, warm sodium lamps
+   pooling on floors, red strobes near objectives, light fog swallowing the far edges.
+
+## 5. 3D character plan
+
+**Budgets (from the asset contract):** operator ≤2,500 tris, infected ≤2,000, bosses ≤4,000; one
+1024² texture/atlas; pivot at feet; 1 unit = 1 m; +Y up, +Z forward.
+
+**Rig standard:** Unity Humanoid-compatible skeleton (hips → spine → chest → neck → head, arms,
+legs) so every animation retargets to every character.
+
+**Recommended route (zero cost):**
+1. **Base:** CC0 rigged low-poly humans/zombies (e.g. Quaternius, Kenney) — already rigged and
+   animated, licence-clean. Log each in `ASSET_LICENSES.md`.
+2. **Make them DEADZONE:** recolour to the palette, add kit pieces in Blender (plate carrier,
+   helmet, backpack, gas mask; torn clothing and growths for infected). Blender Python scripts
+   make this repeatable.
+3. **Animations:** pack animations + Mixamo (free, needs Adobe account) for gaps; retarget via Humanoid.
+4. **Unity hookup:** Animator with a speed/aim blend tree driven by `PlayerController` velocity;
+   upper-body aim layer for shooting; replace the box prefabs.
+
+**Alternative:** fully custom modelling in Blender (more unique, much slower; better left to the
+hero character after the slice proves fun).

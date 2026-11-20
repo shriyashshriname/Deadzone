@@ -50,7 +50,7 @@ namespace Deadzone.UI
             }
 
             // Update extraction beacon if active
-            var extraction = FindFirstObjectByType<ExtractionZone>();
+            var extraction = FindAnyObjectByType<ExtractionZone>();
             if (extraction != null && extractionBlip != null)
             {
                 extractionBlip.gameObject.SetActive(extraction.IsActive);

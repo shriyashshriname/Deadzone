@@ -20,7 +20,7 @@ namespace Deadzone.UI
                 return true;
             }
 
-            var stations = Object.FindObjectsByType<PowerSubstation>(FindObjectsSortMode.None);
+            var stations = Object.FindObjectsByType<PowerSubstation>();
             for (int i = 0; i < stations.Length; i++)
             {
                 if (stations[i].IsPlayerInRange && !stations[i].IsOnline)
@@ -31,7 +31,7 @@ namespace Deadzone.UI
                 }
             }
 
-            var airdrops = Object.FindObjectsByType<SupplyAirdrop>(FindObjectsSortMode.None);
+            var airdrops = Object.FindObjectsByType<SupplyAirdrop>();
             for (int i = 0; i < airdrops.Length; i++)
             {
                 if (airdrops[i].IsPlayerInRange && !airdrops[i].IsClaimed)

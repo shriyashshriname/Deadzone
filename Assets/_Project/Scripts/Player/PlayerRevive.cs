@@ -37,7 +37,7 @@ namespace Deadzone.Player
         private void Start()
         {
             health.OnDeath += HandleFatalDamage;
-            activeSquadmate = FindFirstObjectByType<FriendlySquadmate>();
+            activeSquadmate = FindAnyObjectByType<FriendlySquadmate>();
         }
 
         private void OnDestroy()
@@ -86,7 +86,7 @@ namespace Deadzone.Player
 
         private void Update()
         {
-            if (activeSquadmate == null) activeSquadmate = FindFirstObjectByType<FriendlySquadmate>();
+            if (activeSquadmate == null) activeSquadmate = FindAnyObjectByType<FriendlySquadmate>();
 
             if (isDowned)
             {
