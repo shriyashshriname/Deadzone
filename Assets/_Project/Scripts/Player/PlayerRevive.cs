@@ -66,7 +66,7 @@ namespace Deadzone.Player
             isDowned = true;
             currentBleedout = bleedoutDuration;
             currentReviveProgress = 0f;
-            transform.localScale = new Vector3(1f, 0.45f, 1f); // Crawl pose
+            // Downed pose is shown by CharacterAnimDriver (lying on the side); no root squash.
             KillFeedUI.PostMessage("⚠ OPERATOR DOWN! Teammate dispatched for revive!", new Color(1f, 0.8f, 0.2f));
 
             if (AudioManager.Instance != null) AudioManager.Instance.PlayHit();

@@ -156,7 +156,7 @@ namespace Deadzone.Enemies
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
             }
 
-            transform.position += direction * (moveSpeed * Time.deltaTime);
+            Deadzone.Core.EnemyMotor.Step(this, direction * (moveSpeed * Time.deltaTime));
         }
 
         private void AttackPlayer()

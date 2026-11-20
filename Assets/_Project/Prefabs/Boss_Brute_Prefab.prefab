@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 7203937557406848568}
   - component: {fileID: 2248628530127218565}
   - component: {fileID: 3356284628431631389}
+  - component: {fileID: 5862104155575477417}
   m_Layer: 0
   m_Name: Boss_Brute_Prefab
   m_TagString: Enemy
@@ -35,7 +36,7 @@ Transform:
   m_LocalScale: {x: 2.2, y: 2.2, z: 2.2}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7241303168067747008}
+  - {fileID: 772135525603645021}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &8942736686055856701
@@ -139,7 +140,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Core.TeamMember
   teamId: 0
---- !u!1001 &7202662770979625771
+--- !u!195 &5862104155575477417
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3722689550242773856}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.6
+  m_Speed: 4
+  m_Acceleration: 40
+  avoidancePriority: 30
+  m_AngularSpeed: 0
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 0
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 1
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 1
+--- !u!1001 &954081793507455414
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -173,7 +196,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.00000004371139
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalRotation.x
@@ -181,7 +204,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalRotation.z
@@ -249,31 +272,26 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3541669483411742372}
+      addedObject: {fileID: 1060021386991743774}
   m_SourcePrefab: {fileID: 100100000, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
---- !u!4 &7241303168067747008 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
-  m_PrefabInstance: {fileID: 7202662770979625771}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &8013476524473116282 stripped
+--- !u!1 &143268048468495591 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
-  m_PrefabInstance: {fileID: 7202662770979625771}
+  m_PrefabInstance: {fileID: 954081793507455414}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3541669483411742372
+--- !u!114 &1060021386991743774
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8013476524473116282}
+  m_GameObject: {fileID: 143268048468495591}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c7f9d9d083f3354ab35a8f74dc319a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Core.CharacterAnimDriver
-  runReferenceSpeed: 1.5006341
+  runReferenceSpeed: 1.5006266
   moveEnter: 0.35
   idleExit: 0.15
   speedDamping: 0.08
@@ -283,3 +301,8 @@ MonoBehaviour:
   backpedalAngle: 115
   randomizePhase: 1
   corpseTime: 2.2
+--- !u!4 &772135525603645021 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
+  m_PrefabInstance: {fileID: 954081793507455414}
+  m_PrefabAsset: {fileID: 0}

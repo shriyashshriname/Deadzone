@@ -58,7 +58,7 @@ namespace Deadzone.Player
             if (isDowned || isDead) return;
             isDowned = true;
             bleedoutTimer = 20f;
-            transform.localScale = new Vector3(1f, 0.45f, 1f);
+            // Downed pose is shown by CharacterAnimDriver (lying on the side); no root squash.
             KillFeedUI.PostMessage($"⚠ SQUADMATE DOWN: [{callsign}] needs revive! [HOLD E]", new Color(1f, 0.75f, 0.2f));
         }
 
@@ -107,13 +107,12 @@ namespace Deadzone.Player
             if (!playerTransform) return;
 
             float dist = Vector3.Distance(transform.position, playerTransform.position);
-            Vector3 dir = (playerTransform.position - transform.position).normalized;
-            dir.y = 0f;
+            Vector3 dir = Deadzone.Core.EnemyMotor.SteerDir(this, playerTransform.position);
 
             if (dist > 2.2f)
             {
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 12f * Time.deltaTime);
-                transform.position += dir * (moveSpeed * 1.25f * Time.deltaTime); // Sprint to revive
+                Deadzone.Core.EnemyMotor.Step(this, dir * (moveSpeed * 1.25f * Time.deltaTime)); // Sprint to revive
                 reviveChannelTimer = 0f;
             }
             else
@@ -150,9 +149,8 @@ namespace Deadzone.Player
                 float pDist = Vector3.Distance(transform.position, playerTransform.position);
                 if (pDist > followDistance)
                 {
-                    Vector3 moveDir = (playerTransform.position - transform.position).normalized;
-                    moveDir.y = 0f;
-                    transform.position += moveDir * (moveSpeed * Time.deltaTime);
+                    Vector3 moveDir = Deadzone.Core.EnemyMotor.SteerDir(this, playerTransform.position);
+                    Deadzone.Core.EnemyMotor.Step(this, moveDir * (moveSpeed * Time.deltaTime));
                     if (currentEnemyTarget == null && moveDir.sqrMagnitude > 0.01f)
                         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), 8f * Time.deltaTime);
                 }

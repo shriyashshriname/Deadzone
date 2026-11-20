@@ -99,15 +99,14 @@ namespace Deadzone.Enemies
 
         private void HandleSkitter(float dist)
         {
-            Vector3 dir = (playerTarget.position - transform.position).normalized;
-            dir.y = 0f;
+            Vector3 dir = Deadzone.Core.EnemyMotor.SteerDir(this, playerTarget.position);
 
             if (dir.sqrMagnitude > 0.01f)
             {
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 10f * Time.deltaTime);
             }
 
-            transform.position += dir * (moveSpeed * Time.deltaTime);
+            Deadzone.Core.EnemyMotor.Step(this, dir * (moveSpeed * Time.deltaTime));
 
             // Trigger leap attack if within optimal leap range
             if (dist <= leapRange && dist > 3f && Time.time >= nextLeapTime)
@@ -132,7 +131,7 @@ namespace Deadzone.Enemies
             OnStateChanged?.Invoke(currentState);
 
             // Quick kinetic leap impulse
-            transform.position += dir * (leapSpeed * 0.4f);
+            Deadzone.Core.EnemyMotor.Step(this, dir * (leapSpeed * 0.4f));
 
             if (TopDownCamera.Instance != null)
             {

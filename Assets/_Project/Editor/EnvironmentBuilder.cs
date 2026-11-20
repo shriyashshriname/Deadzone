@@ -420,6 +420,23 @@ namespace Deadzone.Editor
             if (surface == null) { Debug.LogWarning("[Env] No NavMeshSurface"); return; }
             surface.collectObjects = CollectObjects.All;
             surface.useGeometry = UnityEngine.AI.NavMeshCollectGeometry.PhysicsColliders;
+            // Only the ground is walkable. Without this, roofs of cars/containers/rubble became walkable
+            // islands: enemies spawned or snapped up there could never reach the player and the wave stalled.
+            int notWalkable = UnityEngine.AI.NavMesh.GetAreaFromName("Not Walkable");
+            foreach (var go in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                if (go.name == "Floor" || go.GetComponentInChildren<Collider>(true) == null) continue;
+                foreach (var col in go.GetComponentsInChildren<Collider>(true))
+                {
+                    if (col.isTrigger || col.GetComponent<CharacterController>() != null) continue;
+                    if (col.GetComponentInParent<UnityEngine.AI.NavMeshAgent>() != null) continue; // moving characters are not terrain
+                    var mod = col.GetComponent<NavMeshModifier>();
+                    if (mod == null) mod = col.gameObject.AddComponent<NavMeshModifier>();
+                    mod.overrideArea = true;
+                    mod.area = notWalkable;
+                    mod.applyToChildren = false;
+                }
+            }
             surface.BuildNavMesh();
             // Persist the data; an unsaved NavMeshData is dropped on reload, so builds had no navmesh.
             AssetDatabase.DeleteAsset(NavMeshAssetPath);

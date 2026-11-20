@@ -40,8 +40,7 @@ namespace Deadzone.Enemies
             if (!playerTarget) return;
 
             float dist = Vector3.Distance(transform.position, playerTarget.position);
-            Vector3 dir = (playerTarget.position - transform.position).normalized;
-            dir.y = 0f;
+            Vector3 dir = Deadzone.Core.EnemyMotor.SteerDir(this, playerTarget.position);
 
             if (dir.sqrMagnitude > 0.01f)
             {
@@ -50,7 +49,7 @@ namespace Deadzone.Enemies
 
             if (dist > attackRange)
             {
-                transform.position += dir * (moveSpeed * Time.deltaTime);
+                Deadzone.Core.EnemyMotor.Step(this, dir * (moveSpeed * Time.deltaTime));
             }
             else if (Time.time >= nextAttackTime)
             {

@@ -89,15 +89,14 @@ namespace Deadzone.Enemies
         private void UpdateChasing()
         {
             float dist = Vector3.Distance(transform.position, playerTarget.position);
-            Vector3 dir = (playerTarget.position - transform.position).normalized;
-            dir.y = 0f;
+            Vector3 dir = Deadzone.Core.EnemyMotor.SteerDir(this, playerTarget.position);
 
             if (dir.sqrMagnitude > 0.01f)
             {
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 5f * Time.deltaTime);
             }
 
-            transform.position += dir * (chaseSpeed * Time.deltaTime);
+            Deadzone.Core.EnemyMotor.Step(this, dir * (chaseSpeed * Time.deltaTime));
 
             if (dist <= meleeRange)
             {
@@ -138,7 +137,7 @@ namespace Deadzone.Enemies
 
         private void UpdateCharging()
         {
-            transform.position += chargeDirection * (chargeSpeed * Time.deltaTime);
+            Deadzone.Core.EnemyMotor.Step(this, chargeDirection * (chargeSpeed * Time.deltaTime));
 
             // Check collision with player
             if (playerTarget != null && Vector3.Distance(transform.position, playerTarget.position) <= 2.2f)

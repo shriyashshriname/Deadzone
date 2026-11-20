@@ -60,8 +60,7 @@ namespace Deadzone.Enemies
             }
 
             // Normal rapid pursuit
-            Vector3 dir = (playerTarget.position - transform.position).normalized;
-            dir.y = 0f;
+            Vector3 dir = Deadzone.Core.EnemyMotor.SteerDir(this, playerTarget.position);
 
             if (dir.sqrMagnitude > 0.01f)
             {
@@ -69,7 +68,7 @@ namespace Deadzone.Enemies
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
             }
 
-            transform.position += dir * (moveSpeed * Time.deltaTime);
+            Deadzone.Core.EnemyMotor.Step(this, dir * (moveSpeed * Time.deltaTime));
         }
 
         private void StartLeap()
@@ -85,7 +84,7 @@ namespace Deadzone.Enemies
         private void ExecuteLeap()
         {
             float elapsed = (Time.time - leapStartTime) / LeapDuration;
-            transform.position = Vector3.Lerp(transform.position, leapTarget, elapsed);
+            Deadzone.Core.EnemyMotor.Step(this, Vector3.Lerp(transform.position, leapTarget, elapsed) - transform.position);
 
             if (elapsed >= 1f)
             {

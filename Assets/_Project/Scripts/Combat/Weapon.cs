@@ -26,6 +26,7 @@ namespace Deadzone.Combat
         public event Action OnReloadStarted;
         public event Action OnReloadCompleted;
         public event Action<WeaponData> OnWeaponDataChanged;
+        public event Action OnFired;
         private MaterialPropertyBlock tracerBlock;
 
         public WeaponData Data => data;
@@ -84,6 +85,7 @@ namespace Deadzone.Combat
             OnAmmoChanged?.Invoke(currentAmmo, data.magazineCapacity);
 
             FireBullets();
+            OnFired?.Invoke();
 
             if (data.acousticNoiseRadius > 0f && InfectedSwarmDirector.Instance != null && firePoint != null)
             {

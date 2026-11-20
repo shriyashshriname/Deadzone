@@ -57,14 +57,23 @@ namespace Deadzone.Enemies
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dirToPlayer), 8f * Time.deltaTime);
             }
 
+            // Ranged enemies need a clear shot: without line of sight, walk around the cover toward the
+            // player instead of parking behind it (which stalled waves).
+            bool canSee = HasLineOfSight();
+            if (!canSee)
+            {
+                Deadzone.Core.EnemyMotor.Step(this, Deadzone.Core.EnemyMotor.SteerDir(this, playerTarget.position) * (moveSpeed * Time.deltaTime));
+                return;
+            }
+
             // Tactical positioning: retreat if too close, approach if too far
             if (dist < fleeDistance)
             {
-                transform.position -= dirToPlayer * (moveSpeed * Time.deltaTime);
+                Deadzone.Core.EnemyMotor.Step(this, -(dirToPlayer * (moveSpeed * Time.deltaTime)));
             }
             else if (dist > preferredDistance)
             {
-                transform.position += dirToPlayer * (moveSpeed * Time.deltaTime);
+                Deadzone.Core.EnemyMotor.Step(this, Deadzone.Core.EnemyMotor.SteerDir(this, playerTarget.position) * (moveSpeed * Time.deltaTime));
             }
 
             // Spit attack
@@ -72,6 +81,14 @@ namespace Deadzone.Enemies
             {
                 SpitAcid();
             }
+        }
+
+        private bool HasLineOfSight()
+        {
+            Vector3 from = transform.position + Vector3.up * 0.4f;
+            Vector3 to = playerTarget.position + Vector3.up * 0.4f;
+            if (!Physics.Linecast(from, to, out var hit, ~0, QueryTriggerInteraction.Ignore)) return true;
+            return hit.transform == playerTarget || hit.transform.IsChildOf(playerTarget) || hit.transform.IsChildOf(transform) || hit.collider.CompareTag("Enemy");
         }
 
         private void SpitAcid()

@@ -28,7 +28,9 @@ namespace Deadzone.Editor
         const string Prefabs = "Assets/_Project/Prefabs";
         const string ScenePath = "Assets/_Project/Scenes/Graybox_Sandbox.unity";
         const string VisualName = "Visual";
-        const float ModelYaw = 180f; // Kenney rig faces -Z; gameplay roots face +Z (LookRotation)
+        // Humanoid retargeting already orients the animated body to the Animator's +Z. (A 180 here only looked right
+        // in a static T-pose capture; in play it made every humanoid face backwards.) Verified with in-play captures.
+        const float ModelYaw = 0f;
 
         // prefab, skin, height multiplier vs collider, fallback reference speed (m/s), zombie animation set?
         // Runner / Spitter / Crawler King are creatures now (CreatureBuilder).
@@ -140,6 +142,9 @@ namespace Deadzone.Editor
                 c.loopPose = c.loopTime;
                 c.lockRootRotation = c.lockRootHeightY = c.lockRootPositionXZ = true;
                 c.keepOriginalOrientation = c.keepOriginalPositionY = c.keepOriginalPositionXZ = true;
+                // UAL2's mannequin faces the opposite way to Unity's humanoid forward: without this the
+                // retargeted zombie walks backwards (verified with in-play captures from behind).
+                c.rotationOffset = 180f;
             }
             ai.clipAnimations = clips;
             ai.SaveAndReimport();
@@ -212,6 +217,10 @@ namespace Deadzone.Editor
             state.speedParameterActive = true;
             state.speedParameter = "AnimSpeed";
             sm.defaultState = state;
+            // AimIK (hands on the gun, look at target) needs the IK pass on the base layer.
+            var layers = ctrl.layers;
+            layers[0].iKPass = true;
+            ctrl.layers = layers;
             EditorUtility.SetDirty(ctrl);
             return ctrl;
         }

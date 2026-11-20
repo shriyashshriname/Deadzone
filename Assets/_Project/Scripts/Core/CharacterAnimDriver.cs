@@ -43,6 +43,11 @@ namespace Deadzone.Core
         private Vector3 lastPos;
         private Vector3 smoothedVelocity;
         private bool moving, dead, hasAttack, hasHit, hasDead, isFriendly;
+        private Coroutine toppleRoutine;
+        private float footDrop;               // collider-bottom offset below the root pivot (world, at design time)
+        private float groundShift, groundVel;
+        private readonly RaycastHit[] groundHits = new RaycastHit[6];
+        private Vector3 baseLocalPosition;
         private float twist, twistVel, lastHp = -1f, nextHitTime;
 
         public float CurrentSpeed => smoothedVelocity.magnitude;
@@ -62,6 +67,8 @@ namespace Deadzone.Core
             animator.applyRootMotion = false;
             mover = transform.parent != null ? transform.parent : transform;
             baseLocalRotation = transform.localRotation;
+            baseLocalPosition = transform.localPosition;
+            footDrop = mover.position.y - VisualFootY();
             foreach (var p in animator.parameters)
             {
                 if (p.nameHash == AttackId) hasAttack = true;
@@ -128,9 +135,40 @@ namespace Deadzone.Core
 
             twist = Mathf.SmoothDampAngle(twist, targetTwist, ref twistVel, twistSmoothTime);
             transform.localRotation = Quaternion.Euler(0f, twist, 0f) * baseLocalRotation;
+            GroundFeet(dt);
 
             animator.SetFloat(SpeedId, speedN, 0.06f, dt);
             animator.SetFloat(AnimSpeedId, playback);
+        }
+
+        /// <summary>Where the feet are designed to be: the bottom of the root's collider.</summary>
+        private float VisualFootY()
+        {
+            if (mover.TryGetComponent<CharacterController>(out var cc)) return mover.TransformPoint(cc.center - Vector3.up * cc.height * 0.5f).y;
+            if (mover.TryGetComponent<CapsuleCollider>(out var cap)) return mover.TransformPoint(cap.center - Vector3.up * cap.height * 0.5f).y;
+            return mover.position.y - 1f;
+        }
+
+        /// <summary>
+        /// Foot grounding: plant the visual on the ground actually under the character (navmesh height
+        /// differs a little from the floor near obstacles), so nobody floats or sinks.
+        /// </summary>
+        private void GroundFeet(float dt)
+        {
+            float designFoot = mover.position.y - footDrop;
+            float target = 0f;
+            int n = Physics.RaycastNonAlloc(mover.position + Vector3.up * 0.3f, Vector3.down, groundHits, 4f, ~0, QueryTriggerInteraction.Ignore);
+            float best = float.MinValue;
+            for (int i = 0; i < n; i++)
+            {
+                var h = groundHits[i];
+                if (h.transform.IsChildOf(mover) || h.collider.CompareTag("Enemy") || h.collider.CompareTag("Player")) continue;
+                if (h.point.y > best) best = h.point.y;
+            }
+            if (best > float.MinValue) target = Mathf.Clamp(best - designFoot, -0.6f, 0.6f);
+            groundShift = Mathf.SmoothDamp(groundShift, target, ref groundVel, 0.06f, Mathf.Infinity, dt);
+            transform.localPosition = baseLocalPosition;
+            transform.position += Vector3.up * groundShift;
         }
 
         public void TriggerAttack()
@@ -143,7 +181,9 @@ namespace Deadzone.Core
         private void HandleHealthChanged(float current, float max)
         {
             bool damaged = lastHp >= 0f && current < lastHp;
+            bool restored = dead && isFriendly && current > 0f;
             lastHp = current;
+            if (restored) { Recover(); return; }
             if (!damaged || dead || isFriendly || Time.time < nextHitTime) return;
             nextHitTime = Time.time + 0.45f;
             if (hasHit) animator.SetTrigger(HitId);
@@ -153,19 +193,35 @@ namespace Deadzone.Core
         {
             if (dead) return;
             dead = true;
-            OnDisable();
             animator.SetFloat(SpeedId, 0f);
             animator.SetFloat(AnimSpeedId, 1f);
             if (isFriendly)
             {
-                // Player / squadmate: downed handling belongs to gameplay; just topple in place.
-                if (hasDead) animator.SetTrigger(DeadId); else StartCoroutine(Topple(false));
+                // Player / squadmate are DOWNED, not dead: lie on the side and wait for a revive
+                // (stay subscribed so Recover() runs when health comes back).
+                if (hasDead) animator.SetTrigger(DeadId); else toppleRoutine = StartCoroutine(Topple(false));
                 return;
             }
+            OnDisable();
             // Enemy: detach so the corpse outlives the gameplay object (which is destroyed quickly).
             transform.SetParent(null, true);
             if (hasDead) animator.SetTrigger(DeadId);
             StartCoroutine(Topple(hasDead));
+        }
+
+        /// <summary>Revived: stand back up and resume animation.</summary>
+        private void Recover()
+        {
+            if (toppleRoutine != null) { StopCoroutine(toppleRoutine); toppleRoutine = null; }
+            dead = false;
+            animator.enabled = true;
+            animator.Rebind();
+            transform.localPosition = baseLocalPosition;
+            transform.localRotation = baseLocalRotation;
+            twist = 0f; twistVel = 0f;
+            lastPos = mover.position;
+            smoothedVelocity = Vector3.zero;
+            moving = false;
         }
 
         private IEnumerator Lunge()
@@ -186,14 +242,19 @@ namespace Deadzone.Core
             {
                 // No death clip: fall over sideways with a small bounce.
                 Quaternion from = transform.rotation;
+                Vector3 fromPos = transform.position;
                 Quaternion to = Quaternion.AngleAxis(Random.value < 0.5f ? 85f : -85f, transform.forward) * from;
+                // Lying on its side the body is ~0.25 of its height thick: lift by half of that so it rests ON the floor.
+                float lift = 0.12f * Mathf.Max(0.5f, transform.lossyScale.y / 0.52f);
                 for (float t = 0f; t < 0.35f; t += Time.deltaTime)
                 {
                     float k = t / 0.35f; k = k * k;
                     transform.rotation = Quaternion.Slerp(from, to, k);
+                    transform.position = fromPos + Vector3.up * lift * k;
                     yield return null;
                 }
                 transform.rotation = to;
+                transform.position = fromPos + Vector3.up * lift;
                 animator.enabled = false;
             }
             if (isFriendly) yield break;

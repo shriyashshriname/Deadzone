@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4598046762481425971}
   - component: {fileID: 4709856559480685476}
   - component: {fileID: 6016298715031081492}
+  - component: {fileID: 1185181508077166287}
   m_Layer: 0
   m_Name: Spitter_Prefab
   m_TagString: Enemy
@@ -121,6 +122,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Core.TeamMember
   teamId: 0
+--- !u!195 &1185181508077166287
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5788219028675433192}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.45
+  m_Speed: 4
+  m_Acceleration: 40
+  avoidancePriority: 50
+  m_AngularSpeed: 0
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 0
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 1
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 1
 --- !u!1001 &5989067515894633318
 PrefabInstance:
   m_ObjectHideFlags: 0

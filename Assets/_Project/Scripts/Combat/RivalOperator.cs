@@ -89,13 +89,13 @@ namespace Deadzone.Combat
 
             Vector3 moveDir = Vector3.zero;
             // Advance if far, retreat if too close, strafe sideways
-            if (dist > 9f) moveDir += toTarget.normalized;
+            if (dist > 9f) moveDir += Deadzone.Core.EnemyMotor.SteerDir(this, transform.position + toTarget);
             else if (dist < 4.5f) moveDir -= toTarget.normalized;
 
             Vector3 strafe = Vector3.Cross(Vector3.up, toTarget.normalized) * strafeDir;
             moveDir += strafe * 0.8f;
 
-            transform.position += moveDir.normalized * (moveSpeed * Time.deltaTime);
+            Deadzone.Core.EnemyMotor.Step(this, moveDir.normalized * (moveSpeed * Time.deltaTime));
         }
 
         private void FindOptimalTarget()
@@ -150,7 +150,7 @@ namespace Deadzone.Combat
             if (Random.value < 0.35f)
             {
                 Vector3 dodgeDir = (transform.right * strafeDir) - (transform.forward * 0.5f);
-                transform.position += dodgeDir.normalized * 2.2f;
+                Deadzone.Core.EnemyMotor.Step(this, dodgeDir.normalized * 2.2f);
             }
         }
 

@@ -39,6 +39,10 @@ namespace Deadzone.Core
 
         private int currentWaveIndex = 0, remainingInQueue = 0, activeEnemiesCount = 0;
         private bool isIntermission = false;
+        // Wave bookkeeping by object (a counter alone desyncs if anything is destroyed without dying).
+        private readonly List<Health> waveEnemies = new List<Health>();
+        private float lastKillTime;
+        public IReadOnlyList<Health> AliveWaveEnemies => waveEnemies;
         private float intermissionTimer = 0f;
         private string currentWaveTitle = "";
 
@@ -70,6 +74,53 @@ namespace Deadzone.Core
             waves.Add(new WaveConfig { waveNumber = 5, title = "Wave 5: APEX SHOWDOWN - Subject Zero & Rivals", walkerCount = 8, runnerCount = 6, spawnBossBrute = true, rivalOperatorCount = 2, speedMultiplier = 1.28f, spawnInterval = 1.4f });
             waves.Add(new WaveConfig { waveNumber = 6, title = "Wave 6: Midnight Frenzy & Airdrop", walkerCount = 14, runnerCount = 10, spitterCount = 6, tankCount = 3, spawnAirdrop = true, speedMultiplier = 1.35f, spawnInterval = 1.1f });
             waves.Add(new WaveConfig { waveNumber = 7, title = "Wave 7: EXTRACTION ROYALE - Crawler King & Apex Rivals", runnerCount = 10, spitterCount = 6, tankCount = 2, spawnCrawlerBoss = true, rivalOperatorCount = 3, speedMultiplier = 1.42f, spawnInterval = 1.2f });
+        }
+
+        private int RecountAlive()
+        {
+            waveEnemies.RemoveAll(h => h == null || h.IsDead);
+            activeEnemiesCount = waveEnemies.Count;
+            return activeEnemiesCount;
+        }
+
+        /// <summary>
+        /// Keeps a wave from stalling: anything outside the arena is brought back, and when only a few
+        /// enemies are left with no kills for a while they are alerted and moved within ~20 m of the
+        /// player (out of view) so the player isn't stuck hunting for the last one.
+        /// </summary>
+        private void HandleStragglers()
+        {
+            var player = PlayerController.Instance != null ? PlayerController.Instance.transform : null;
+            if (player == null) return;
+            bool lastFew = remainingInQueue == 0 && waveEnemies.Count <= 3 && Time.time - lastKillTime > 12f;
+            foreach (var hp in waveEnemies)
+            {
+                if (hp == null || hp.IsDead) continue;
+                Vector3 p = hp.transform.position;
+                bool lost = EnemyMotor.IsOutOfArena(p);
+                bool far = (p - player.position).sqrMagnitude > 30f * 30f;
+                if (lost || (lastFew && far)) BringBack(hp, player.position);
+                if (lastFew && hp.TryGetComponent<ZombieEnemy>(out var z)) z.OnAcousticNoiseAlert(player.position);
+            }
+            if (lastFew) lastKillTime = Time.time - 6f; // re-check again in ~6 s, not every tick
+        }
+
+        private void BringBack(Health hp, Vector3 playerPos)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                Vector2 c = UnityEngine.Random.insideUnitCircle.normalized * UnityEngine.Random.Range(17f, 22f);
+                Vector3 target = playerPos + new Vector3(c.x, 0f, c.y);
+                if (Mathf.Abs(target.x) > EnemyMotor.ArenaHalfSize || Mathf.Abs(target.z) > EnemyMotor.ArenaHalfSize) continue;
+                if (!UnityEngine.AI.NavMesh.SamplePosition(target, out var hit, 4f, UnityEngine.AI.NavMesh.AllAreas)) continue;
+                if (hp.TryGetComponent<UnityEngine.AI.NavMeshAgent>(out var agent) && agent.enabled) agent.Warp(hit.position);
+                else
+                {
+                    hp.transform.position = new Vector3(hit.position.x, hp.transform.position.y, hit.position.z);
+                    Grounding.SnapToGround(hp.gameObject, Grounding.PlayerFloorY(PlayerController.Instance.transform));
+                }
+                return;
+            }
         }
 
         private WaveConfig GetConfigForCurrentWave()
@@ -132,7 +183,7 @@ namespace Deadzone.Core
             for (int i = 0; i < queue.Count; i++)
             {
                 // Hard cap: never exceed 35 active enemies concurrently
-                while (activeEnemiesCount >= 35)
+                while (RecountAlive() >= 35)
                 {
                     yield return new WaitForSeconds(0.25f);
                 }
@@ -142,7 +193,12 @@ namespace Deadzone.Core
                 yield return new WaitForSeconds(wave.spawnInterval * spawnPaceMultiplier);
             }
 
-            while (activeEnemiesCount > 0) yield return new WaitForSeconds(0.4f);
+            lastKillTime = Time.time;
+            while (RecountAlive() > 0)
+            {
+                HandleStragglers();
+                yield return new WaitForSeconds(0.4f);
+            }
 
             OnWaveCompleted?.Invoke(wave.waveNumber);
             if ((wave.spawnBossBrute || wave.spawnCrawlerBoss) && ExtractionZone.Instance != null) ExtractionZone.Instance.ActivateZone();
@@ -157,6 +213,9 @@ namespace Deadzone.Core
             Vector3 spawnPos = center + new Vector3(circle.x, 0.5f, circle.y);
             spawnPos.x = Mathf.Clamp(spawnPos.x, -56f, 56f);
             spawnPos.z = Mathf.Clamp(spawnPos.z, -56f, 56f);
+            // Never spawn inside a prop/container: snap to the nearest walkable navmesh point.
+            if (UnityEngine.AI.NavMesh.SamplePosition(spawnPos, out var navHit, 6f, UnityEngine.AI.NavMesh.AllAreas))
+                spawnPos = new Vector3(navHit.position.x, spawnPos.y, navHit.position.z);
             GameObject enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
             Grounding.SnapToGround(enemy, Grounding.PlayerFloorY(PlayerController.Instance != null ? PlayerController.Instance.transform : null));
 
@@ -171,9 +230,11 @@ namespace Deadzone.Core
             if (enemy.TryGetComponent<Health>(out var hp))
             {
                 if (healthMult > 1.0f) hp.Initialize(hp.MaxHealth * healthMult);
+                waveEnemies.Add(hp);
                 hp.OnDeath += () =>
                 {
                     activeEnemiesCount = Mathf.Max(0, activeEnemiesCount - 1);
+                    lastKillTime = Time.time;
                     if (GameManager.Instance != null) GameManager.Instance.AddKill();
                     if (AudioManager.Instance != null) AudioManager.Instance.PlayHit();
                     TrySpawnLoot(enemy.transform.position, isBoss, prefab == spitterPrefab);
