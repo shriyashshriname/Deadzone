@@ -18,10 +18,31 @@ namespace Deadzone.Editor
         {
         }
 
+        public const string VersionPrefix = "0.4";
+
+        /// <summary>
+        /// Every build gets the next build number so phone tests can be matched to builds.
+        /// Shown in-game by Deadzone.UI.BuildNumberLabel and written to Builds/BUILD_NUMBER.txt.
+        /// </summary>
+        public static int StampNextBuildNumber()
+        {
+            int n = PlayerSettings.Android.bundleVersionCode + 1;
+            PlayerSettings.Android.bundleVersionCode = n;
+            PlayerSettings.bundleVersion = $"{VersionPrefix}.{n}";
+            PlayerSettings.productName = "DEADZONE";
+            AssetDatabase.SaveAssets();
+            System.IO.Directory.CreateDirectory("Builds");
+            System.IO.File.WriteAllText("Builds/BUILD_NUMBER.txt",
+                $"Build #{n} · v{PlayerSettings.bundleVersion} · {System.DateTime.Now:yyyy-MM-dd HH:mm}" + System.Environment.NewLine);
+            Debug.Log($"[BuildScript] Stamped Build #{n} (v{PlayerSettings.bundleVersion})");
+            return n;
+        }
+
         [MenuItem("Deadzone/Build/Windows (x64)")]
         public static void BuildWindows()
         {
             string buildPath = "Builds/Windows/Deadzone.exe";
+            int buildNo = StampNextBuildNumber();
             BuildPlayerOptions options = new BuildPlayerOptions
             {
                 scenes = Scenes,
@@ -35,7 +56,7 @@ namespace Deadzone.Editor
 
             if (summary.result == BuildResult.Succeeded)
             {
-                Debug.Log($"[BuildScript] Windows Build Succeeded: {summary.totalSize / (1024 * 1024)} MB");
+                Debug.Log($"[BuildScript] Windows Build #{buildNo} Succeeded: {summary.totalSize / (1024 * 1024)} MB uncompressed");
             }
             else
             {
@@ -47,6 +68,7 @@ namespace Deadzone.Editor
         public static void BuildAndroid()
         {
             string buildPath = "Builds/Android/Deadzone.apk";
+            int buildNo = StampNextBuildNumber();
             string dir = System.IO.Path.GetDirectoryName(buildPath);
             if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
 
@@ -84,7 +106,8 @@ namespace Deadzone.Editor
 
             if (summary.result == BuildResult.Succeeded)
             {
-                Debug.Log($"[BuildScript] Android APK Succeeded: {summary.totalSize / (1024 * 1024)} MB");
+                long apk = new System.IO.FileInfo(buildPath).Length;
+                Debug.Log($"[BuildScript] Android APK Build #{buildNo} Succeeded: {apk / (1024 * 1024)} MB apk");
                 foreach (var f in report.GetFiles())
                 {
                     Debug.Log($"[BuildFile] {f.path} ({f.role}, {f.size} bytes)");
