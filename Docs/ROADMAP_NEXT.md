@@ -118,3 +118,18 @@ hero character after the slice proves fun).
 
 Runtime pieces: `CharacterAnimDriver` (speed → Animator, works with any mover), `Grounding` (spawned
 transform-driven enemies sit on the floor), `HitFlash` now also flashes emission so textured characters visibly flash.
+
+## 7. Environment kit v1 (2026-11-20)
+
+- `scripts/blender_env_kit.py` generates 30 low-poly props in the palette: 3 grass clumps, tall weeds, dead bush,
+  2 rocks, leaning + snapped power poles, bent street lamp, 2 rebar chunks ("broken bars"), rubble, chain-link +
+  broken fence, sandbags, tyre stack, car wreck, drums (standing/toppled), pallet, cone, bent sign, barbed wire,
+  barrier (broken), debris planks, dirt/overgrowth ground patches.
+- **Deadzone → Art → Build Environment** (`EnvironmentBuilder.BuildAll`): shared palette materials (batched),
+  prefabs with colliders, seeded scatter of 30 themed clusters (overgrowth, wreck, roadside, construction,
+  checkpoint, powerline) + perimeter dressing + ~950 grass + 34 ground patches, 5 sodium lamp lights,
+  linear fog, graybox materials recoloured to the bible. Idempotent (rebuilds the `Environment` root).
+- **Bug fixed:** the NavMesh was baked but never saved, so phone builds had no navmesh (zombies fell back to
+  simple steering). Now saved to `Scenes/Graybox_Sandbox_NavMesh.asset` on every environment build.
+- Movement: `CharacterAnimDriver` now twists the body toward strafe direction, plays the run backwards when
+  backpedalling, and matches playback to the run cycle's measured ground speed (per character, at build time).

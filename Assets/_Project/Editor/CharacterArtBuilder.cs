@@ -241,8 +241,50 @@ namespace Deadzone.Editor
             anim.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
 
             var driver = vis.AddComponent<CharacterAnimDriver>();
-            driver.Configure(refSpeed);
+            float measured = MeasureRunGroundSpeed(vis, anim);
+            driver.Configure(measured > 0f ? measured : refSpeed);
+            Debug.Log($"[CharacterArt] {root.name}: run cycle ground speed {measured:0.00} m/s (fallback {refSpeed})");
             EditorUtility.SetDirty(driver);
+        }
+
+        /// <summary>
+        /// Samples the run clip and measures how fast a planted foot slides backwards (= ground speed
+        /// at 1x playback) in world metres for this character's final scale. 0 if it can't measure.
+        /// </summary>
+        static float MeasureRunGroundSpeed(GameObject vis, Animator anim)
+        {
+            if (!isHuman) return 0f;
+            var run = LoadClip(RunPath);
+            var feet = new[] { anim.GetBoneTransform(HumanBodyBones.LeftFoot), anim.GetBoneTransform(HumanBodyBones.RightFoot) };
+            if (feet[0] == null || feet[1] == null) return 0f;
+
+            var saved = vis.GetComponentsInChildren<Transform>().Select(x => (x, x.localPosition, x.localRotation, x.localScale)).ToArray();
+            const int N = 48;
+            float dt = run.length / N;
+            var pos = new Vector3[2, N + 1];
+            for (int i = 0; i <= N; i++)
+            {
+                run.SampleAnimation(vis, i * dt);
+                for (int f = 0; f < 2; f++) pos[f, i] = feet[f].position;
+            }
+            foreach (var (x, p, r, s) in saved) { x.localPosition = p; x.localRotation = r; x.localScale = s; }
+
+            var speeds = new System.Collections.Generic.List<float>();
+            for (int f = 0; f < 2; f++)
+            {
+                var ys = Enumerable.Range(0, N + 1).Select(i => pos[f, i].y).OrderBy(y => y).ToArray();
+                float stanceY = ys[(int)(N * 0.35f)];
+                for (int i = 0; i < N; i++)
+                {
+                    if (pos[f, i].y > stanceY || pos[f, i + 1].y > stanceY) continue;
+                    var d = pos[f, i + 1] - pos[f, i]; d.y = 0f;
+                    speeds.Add(d.magnitude / dt);
+                }
+            }
+            if (speeds.Count == 0) return 0f;
+            speeds.Sort();
+            float median = speeds[speeds.Count / 2];
+            return (median > 0.5f && median < 15f) ? median : 0f;
         }
 
         static int ApplyToScenePlayer(RuntimeAnimatorController ctrl)
@@ -339,6 +381,8 @@ namespace Deadzone.Editor
             Render("scene_gamecam", target - rot * Vector3.forward * 14f, rot, 50f);
             Render("scene_gamecam", target - rot * Vector3.forward * 14f, rot, 50f);
             Render("scene_close", target + new Vector3(0f, 3.2f, -6f), Quaternion.Euler(22f, 0f, 0f), 50f);
+            Render("scene_overview", new Vector3(0f, 75f, -62f), Quaternion.Euler(50f, 0f, 0f), 60f);
+            Render("scene_corner", new Vector3(-30f, 16f, -46f), Quaternion.Euler(50f, 20f, 0f), 55f);
             EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single); // discard the temp enemies
         }
 

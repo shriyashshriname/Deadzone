@@ -34,7 +34,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1993374479495934462}
+  - {fileID: 8255094339458277776}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &6859821962994888414
@@ -120,7 +120,7 @@ MonoBehaviour:
   combatRange: 16
   projectilePrefab: {fileID: 100000, guid: b1b2b3b4b5b601010101010101010101, type: 3}
   deathLootPrefab: {fileID: 7481053556118602733, guid: 1410c51231b0cc048b1a3e0f88ffafb6, type: 3}
---- !u!1001 &2027564288714102293
+--- !u!1001 &8432222761597978235
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -180,6 +180,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -2910680225768546350, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.10233646
+      objectReference: {fileID: 0}
+    - target: {fileID: -2910680225768546350, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.0011517383
+      objectReference: {fileID: 0}
     - target: {fileID: -2049929814205202405, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_Quality
       value: 2
@@ -194,11 +202,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2578092655996727444, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.030971779
+      value: 0.03097178
       objectReference: {fileID: 0}
     - target: {fileID: 2578092655996727444, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.0008921604
+      value: -0.00089216046
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_Controller
@@ -210,11 +218,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8800304848960209280, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.00073369127
+      value: 0.0007336913
       objectReference: {fileID: 0}
     - target: {fileID: 8800304848960209280, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.04707186
+      value: -0.047071863
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -222,32 +230,36 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3692292772892220817}
+      addedObject: {fileID: 7061239152889064697}
   m_SourcePrefab: {fileID: 100100000, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
---- !u!1 &1216591111269608260 stripped
+--- !u!4 &8255094339458277776 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
+  m_PrefabInstance: {fileID: 8432222761597978235}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8774186613993372458 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
-  m_PrefabInstance: {fileID: 2027564288714102293}
+  m_PrefabInstance: {fileID: 8432222761597978235}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3692292772892220817
+--- !u!114 &7061239152889064697
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1216591111269608260}
+  m_GameObject: {fileID: 8774186613993372458}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c7f9d9d083f3354ab35a8f74dc319a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Core.CharacterAnimDriver
-  runReferenceSpeed: 6
-  idleThreshold: 0.15
-  speedDamping: 0.12
-  playbackRange: {x: 0.55, y: 1.6}
+  runReferenceSpeed: 2.841347
+  moveEnter: 0.35
+  idleExit: 0.15
+  speedDamping: 0.08
+  playbackRange: {x: 0.6, y: 2.3}
+  maxTwist: 65
+  twistSmoothTime: 0.09
+  backpedalAngle: 115
   randomizePhase: 1
---- !u!4 &1993374479495934462 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
-  m_PrefabInstance: {fileID: 2027564288714102293}
-  m_PrefabAsset: {fileID: 0}

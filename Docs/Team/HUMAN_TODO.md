@@ -36,10 +36,17 @@
   3. Ensure `blender.exe` is added to your Windows user/system `PATH` so headless execution (`blender --background ...`) works from the terminal.
   4. Once installed, ART will run the automated headless audit test for modular crate/barrel prop generation using `blender-3d-asset-generation`.
 
-## 5. Download CC0 character packs (browser click needed)
+## 5. Download CC0 character packs (browser click needed) — DONE 2026-11-20 (Kenney Survivors/Retro/Protagonists)
 - [ ] Kenney **Animated Characters Survivors** — https://kenney.nl/assets/animated-characters-survivors (CC0, zombie + survivor)
 - [ ] Kenney **Animated Characters Retro** — https://kenney.nl/assets/animated-characters-retro (CC0, zombie + survivor)
 - [ ] Optional: a Quaternius CC0 soldier / zombie pack (quaternius.com) if you prefer that style
 - [ ] Unzip into `Art_Source/CC0/<PackName>/` (outside Assets/, so Unity doesn't import raw files)
 - [ ] Log each pack in `Docs/ASSET_LICENSES.md`
 - Then Claude runs `scripts/blender_character_import.py` on each model (recolour to palette, pivot, scale, budget check, FBX export).
+
+## 6. Download creature + animation packs (browser click needed)
+Founder direction 2026-11-20: keep only 1–2 zombie types; the rest of the roster should be creatures.
+- [ ] Quaternius **Ultimate Monsters** (CC0, 50 animated monsters) — https://quaternius.com/packs/ultimatemonsters.html → Download → FBX
+- [ ] Quaternius **Universal Animation Library 2** (CC0, 130+ humanoid anims incl. zombie locomotion, combat) — https://quaternius.com/packs/universalanimationlibrary2.html → "Download here" (free Standard tier)
+- [ ] Unzip each into `Art_Source/CC0/<PackName>/` and tell Claude "packs are in".
+Planned roster: Walker + Brute stay zombies; Runner → mutant hound, Spitter → acid bug, Tank → armoured beast, Crawler King → giant crawler.
