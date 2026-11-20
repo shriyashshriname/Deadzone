@@ -77,6 +77,7 @@ namespace Deadzone.Enemies
             isLeaping = true;
             leapStartTime = Time.time;
             leapTarget = playerTarget.position;
+            leapTarget.y = transform.position.y; // stay on the floor; player root height differs
             nextAttackTime = Time.time + attackCooldown;
         }
 

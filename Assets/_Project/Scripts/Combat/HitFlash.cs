@@ -20,6 +20,8 @@ namespace Deadzone.Combat
         private MaterialPropertyBlock propBlock;
         public static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         public static readonly int ColorId = Shader.PropertyToID("_Color");
+        // Textured materials (base colour white) need an emissive flash to read; materials opt in via _EMISSION.
+        public static readonly int EmissionId = Shader.PropertyToID("_EmissionColor");
 
         private void Awake()
         {
@@ -83,6 +85,7 @@ namespace Deadzone.Combat
                     renderers[i].GetPropertyBlock(propBlock);
                     propBlock.SetColor(BaseColorId, c);
                     propBlock.SetColor(ColorId, c);
+                    propBlock.SetColor(EmissionId, c * 0.6f);
                     renderers[i].SetPropertyBlock(propBlock);
                 }
             }
@@ -115,6 +118,7 @@ namespace Deadzone.Combat
                     renderers[i].GetPropertyBlock(propBlock);
                     propBlock.SetColor(BaseColorId, originalColors[i]);
                     propBlock.SetColor(ColorId, originalColors[i]);
+                    propBlock.SetColor(EmissionId, Color.black);
                     renderers[i].SetPropertyBlock(propBlock);
                 }
             }

@@ -34,18 +34,19 @@ ordered plan for getting from today's state to a real Gate 4 vertical slice.
 ## 3. Roadmap
 
 ### Phase A — Stabilise & play (now, ~1 week)
-- [ ] Commit the API-updater changes; move `*.log` into `Logs/`.
+- [x] Commit the API-updater changes (2026-11-20). Still to do: move root `*.log` into `Logs/`.
 - [ ] Founder plays 3 full runs on the phone (HUMAN_TODO §2). Write notes in `Docs/QA/`.
 - [ ] Decide what to **cut** for the slice: keep the original slice (1 map, 1 character, AR/shotgun/SMG,
       Crawler/Brute/Spitter, Crawler King, extraction). Park squadmate, rivals, turrets, daily rewards behind flags.
 - [ ] Tune Noise until shots visibly pull enemies (Gate 2 box).
 
 ### Phase B — Art foundation (parallel with A, ~1–2 weeks)
-- [ ] Approve the art bible (§4) and add `Palette.cs` as the single colour source.
-- [ ] Install Blender (done by Claude 2026-11-20 via winget) and verify `blender --background` works.
-- [ ] Character pipeline: rigged humanoid → FBX → Unity Humanoid Avatar → Animator
-      (idle / run / aim-run / shoot / reload / downed / death). See §5.
-- [ ] Enemy pipeline: same rig standard; walker, runner, spitter, brute variants via mesh/material swaps.
+- [x] Art bible approved; `Scripts/Core/Palette.cs` added (2026-11-20). Follow-up: migrate 24 scripts with literal colours.
+- [x] Blender 5.3 installed and verified headless (2026-11-20).
+- [x] Character pipeline v1 (2026-11-20): Kenney CC0 rig → graded skins → Humanoid avatar → idle/run blend tree,
+      on player, squadmate, rival, walker, runner, spitter, tank, brute. **Still missing clips:** aim-run, shoot,
+      reload, downed, death, attack (source from Mixamo/Quaternius, retarget via Humanoid). Crawler King still a capsule.
+- [x] Enemy variants via skin swaps (same rig). Next: shamble/attack clips so infected don't use the human run.
 - [ ] Environment kit: modular walls, floor tiles, doors, crates, barrels, barriers, lights (≤ contract budgets).
 
 ### Phase C — Visual pass (~2 weeks)
@@ -106,3 +107,14 @@ legs) so every animation retargets to every character.
 
 **Alternative:** fully custom modelling in Blender (more unique, much slower; better left to the
 hero character after the slice proves fun).
+
+## 6. Character pipeline — how to rerun
+
+1. `python scripts/grade_skins.py` — regrade skins from `Art_Source/CC0/` (edit `SKINS` to change who wears what).
+2. Unity menu **Deadzone → Art → Build Rigged Characters** (or headless:
+   `Unity.exe -batchmode -quit -projectPath . -executeMethod Deadzone.Editor.CharacterArtBuilder.BuildAll`).
+   Idempotent; rerun it after **Deadzone → Setup Wave Horde Prefabs and Scene**, which recreates capsule prefabs.
+3. **Deadzone → Art → Capture Character Lineup / Capture Gameplay Scene** writes PNGs to `Captures/` for review.
+
+Runtime pieces: `CharacterAnimDriver` (speed → Animator, works with any mover), `Grounding` (spawned
+transform-driven enemies sit on the floor), `HitFlash` now also flashes emission so textured characters visibly flash.

@@ -109,7 +109,8 @@ namespace Deadzone.Core
                 if (rivalOperatorPrefab != null)
                 {
                     Vector3 rPos = new Vector3(UnityEngine.Random.Range(-48f, 48f), 0.5f, UnityEngine.Random.Range(-48f, 48f));
-                    Instantiate(rivalOperatorPrefab, rPos, Quaternion.identity);
+                    var rival = Instantiate(rivalOperatorPrefab, rPos, Quaternion.identity);
+                    Grounding.SnapToGround(rival, Grounding.PlayerFloorY(PlayerController.Instance != null ? PlayerController.Instance.transform : null));
                 }
             }
 
@@ -153,6 +154,7 @@ namespace Deadzone.Core
             spawnPos.x = Mathf.Clamp(spawnPos.x, -56f, 56f);
             spawnPos.z = Mathf.Clamp(spawnPos.z, -56f, 56f);
             GameObject enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
+            Grounding.SnapToGround(enemy, Grounding.PlayerFloorY(PlayerController.Instance != null ? PlayerController.Instance.transform : null));
 
             if (enemy.TryGetComponent<ZombieEnemy>(out var z)) z.SetSpeedMultiplier(speedMult);
             if (enemy.TryGetComponent<RunnerEnemy>(out var r)) r.SetSpeedMultiplier(speedMult);

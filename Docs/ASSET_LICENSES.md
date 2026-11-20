@@ -15,15 +15,16 @@
 | **Materials** | Tactical color palettes (`Mat_Player`, `Mat_Zombie`, `Mat_Floor`, `Mat_Wall`, `Mat_Cargo_Blue`, etc.) | Procedurally generated via `MaterialSetupHelper.cs` and `UrpSetupHelper.cs` | Custom Studio IP / MIT Equivalent | Pure RGB albedo and PBR values |
 | **Audio** | Weapon gunfire, hit pops, explosions, alerts | Synthesized placeholder audio / Unity audio clips generated via `AudioManager.cs` | Custom Studio IP / MIT Equivalent | Zero external commercial audio assets |
 | **UI Sprites & Fonts** | Health bars, radar blips, hit markers, virtual touch joysticks | Procedural Unity UI shapes and Unity standard UI sprites (`com.unity.ugui`) | Unity Technologies | Zero external paid font licenses |
+| **Characters (3D)** | Rigged humanoid `characterMedium` model + idle/run animations; skins survivorMaleB, survivorFemaleA, zombieA, zombieC (Survivors), zombieFemaleA, zombieMaleA (Retro), criminalMaleA (Protagonists) — regraded to the DEADZONE palette by `scripts/grade_skins.py` | Kenney — Animated Characters Survivors 1.1 / Retro / Protagonists (www.kenney.nl), originals in `Art_Source/CC0/` with each pack's License.txt | **CC0 1.0** (public domain; credit optional) | Added 2026-11-20. Credit "Kenney (kenney.nl)" in game credits as courtesy |
 | **Code & Architecture** | 51+ modular production C# scripts | Authored by DEADZONE Studio Team | Proprietary Studio IP | Written strictly to studio standards |
 
 ---
 
 ## 2. External Dependencies Audit
 
-- **Third-Party Store Assets:** NONE.
+- **Third-Party Store Assets:** NONE. CC0 art only (Kenney character packs, see table).
 - **Paid Assets / Subscriptions:** NONE.
 - **Tracking / Telemetry SDKs:** NONE (All tracking is offline, local JSON in `run_metrics.json`).
 - **External Network APIs:** NONE.
 
-All game assets are fully internal, procedural, or provided directly by the official Unity engine.
+All game assets are internal, procedural, provided by the Unity engine, or CC0 public-domain (Kenney).
