@@ -11,9 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3a1f0a2e5b746819c43d8a9e102f741, type: 3}
   m_Name: WeaponData_AssaultRifle
+  m_EditorClassIdentifier: 
   weaponName: Assault Rifle
   weaponType: 0
   damagePerBullet: 25
+  penetration: 1
   fireRate: 8
   bulletSpeed: 40
   spreadAngle: 2
@@ -22,4 +24,8 @@ MonoBehaviour:
   reloadDuration: 1.8
   cameraShakeMagnitude: 0.15
   cameraShakeDuration: 0.08
+  modelPrefab: {fileID: 4389332810633484641, guid: 20d5b1e3e26b97a4f999c3efad11a22f, type: 3}
+  rarity: 0
+  futuristic: 0
+  tracerColor: {r: 0, g: 0, b: 0, a: 0}
   acousticNoiseRadius: 24

@@ -33,6 +33,9 @@ namespace Deadzone.Core
         [Header("Spawn Settings")]
         [SerializeField] private float spawnRadius = 26f;
         [SerializeField] private List<WaveConfig> waves = new List<WaveConfig>();
+        [Header("Horde Tuning (founder 2026-11-20: many enemies, easy to kill)")]
+        [SerializeField] private float hordeMultiplier = 1.8f;   // scales walker counts
+        [SerializeField] private float spawnPaceMultiplier = 0.7f; // < 1 = faster spawning
 
         private int currentWaveIndex = 0, remainingInQueue = 0, activeEnemiesCount = 0;
         private bool isIntermission = false;
@@ -115,7 +118,8 @@ namespace Deadzone.Core
             }
 
             List<GameObject> queue = new List<GameObject>();
-            for (int i = 0; i < wave.walkerCount; i++) if (walkerPrefab) queue.Add(walkerPrefab);
+            int walkers = Mathf.RoundToInt(wave.walkerCount * hordeMultiplier);
+            for (int i = 0; i < walkers; i++) if (walkerPrefab) queue.Add(walkerPrefab);
             for (int i = 0; i < wave.runnerCount; i++) if (runnerPrefab) queue.Add(runnerPrefab);
             for (int i = 0; i < wave.spitterCount; i++) if (spitterPrefab) queue.Add(spitterPrefab);
             for (int i = 0; i < wave.tankCount; i++) if (tankPrefab) queue.Add(tankPrefab);
@@ -135,7 +139,7 @@ namespace Deadzone.Core
 
                 SpawnEnemy(queue[i], wave.speedMultiplier, wave.healthMultiplier);
                 remainingInQueue--; activeEnemiesCount++;
-                yield return new WaitForSeconds(wave.spawnInterval);
+                yield return new WaitForSeconds(wave.spawnInterval * spawnPaceMultiplier);
             }
 
             while (activeEnemiesCount > 0) yield return new WaitForSeconds(0.4f);
@@ -172,14 +176,25 @@ namespace Deadzone.Core
                     activeEnemiesCount = Mathf.Max(0, activeEnemiesCount - 1);
                     if (GameManager.Instance != null) GameManager.Instance.AddKill();
                     if (AudioManager.Instance != null) AudioManager.Instance.PlayHit();
-                    TrySpawnLoot(enemy.transform.position, isBoss);
+                    TrySpawnLoot(enemy.transform.position, isBoss, prefab == spitterPrefab);
                 };
             }
         }
 
-        private void TrySpawnLoot(Vector3 pos, bool isBoss)
+        [Header("Weapon Drops (M1)")]
+        [SerializeField, Range(0f, 1f)] private float weaponDropChance = 0.07f;
+        [SerializeField, Range(0f, 1f)] private float futuristicEnemyDropChance = 0.30f;
+
+        private void TrySpawnLoot(Vector3 pos, bool isBoss, bool futuristicEnemy = false)
         {
             Vector3 dropPos = pos + Vector3.up * 0.4f;
+            // Guns: bosses always drop a high-tier gun; sci-fi enemies drop futuristic guns more often.
+            float gunChance = isBoss ? 1f : (futuristicEnemy ? futuristicEnemyDropChance : weaponDropChance);
+            if (UnityEngine.Random.value < gunChance)
+            {
+                var gun = Deadzone.Combat.WeaponPickup.RollWeapon(isBoss ? 0.9f : (futuristicEnemy ? 0.45f : 0.1f), futuristicEnemy || isBoss);
+                Deadzone.Combat.WeaponPickup.Spawn(gun, pos + Vector3.forward * 0.6f);
+            }
             if (isBoss)
             {
                 if (healthPickupPrefab) Instantiate(healthPickupPrefab, dropPos + Vector3.left * 0.8f, Quaternion.identity);

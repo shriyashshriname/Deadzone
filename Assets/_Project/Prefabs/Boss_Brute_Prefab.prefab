@@ -35,7 +35,7 @@ Transform:
   m_LocalScale: {x: 2.2, y: 2.2, z: 2.2}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8980408923311260063}
+  - {fileID: 7241303168067747008}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &8942736686055856701
@@ -139,7 +139,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Core.TeamMember
   teamId: 0
---- !u!1001 &8875023837864535668
+--- !u!1001 &7202662770979625771
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -149,15 +149,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.5153151
+      value: 0.51531506
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.5153151
+      value: 0.51531506
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.5153151
+      value: 0.51531506
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalPosition.x
@@ -230,7 +230,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 5d0c17e5a16ff0244a0a8295907514f8, type: 2}
+      objectReference: {fileID: 9100000, guid: 7348d16d9d2b38c4ebcef95315773608, type: 2}
     - target: {fileID: 5866666021909216657, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -249,26 +249,31 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2904286172829829207}
+      addedObject: {fileID: 3541669483411742372}
   m_SourcePrefab: {fileID: 100100000, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
---- !u!1 &8641003580541049637 stripped
+--- !u!4 &7241303168067747008 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
+  m_PrefabInstance: {fileID: 7202662770979625771}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8013476524473116282 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
-  m_PrefabInstance: {fileID: 8875023837864535668}
+  m_PrefabInstance: {fileID: 7202662770979625771}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2904286172829829207
+--- !u!114 &3541669483411742372
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8641003580541049637}
+  m_GameObject: {fileID: 8013476524473116282}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c7f9d9d083f3354ab35a8f74dc319a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Core.CharacterAnimDriver
-  runReferenceSpeed: 6.2509737
+  runReferenceSpeed: 1.5006341
   moveEnter: 0.35
   idleExit: 0.15
   speedDamping: 0.08
@@ -277,8 +282,4 @@ MonoBehaviour:
   twistSmoothTime: 0.09
   backpedalAngle: 115
   randomizePhase: 1
---- !u!4 &8980408923311260063 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
-  m_PrefabInstance: {fileID: 8875023837864535668}
-  m_PrefabAsset: {fileID: 0}
+  corpseTime: 2.2

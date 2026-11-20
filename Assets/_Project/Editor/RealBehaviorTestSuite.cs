@@ -21,7 +21,7 @@ namespace Deadzone.Editor
             UnityEngine.Debug.Log("==================================================");
 
             int passed = 0;
-            int total = 11;
+            int total = 13;
 
             if (Test_NoiseAlertRadius()) passed++;
             if (Test_FriendlyFireImmunity()) passed++;
@@ -34,6 +34,8 @@ namespace Deadzone.Editor
             if (Test_HitFlashShaderColorPropertyChange()) passed++;
             if (Test_EnemyBehindContainerReachesPlayer()) passed++;
             if (Test_MobileTouchControlsAndShootingModes()) passed++;
+            if (M1BehaviorTests.Test_WeaponDropPoolAndRarityBias()) passed++;
+            if (M1BehaviorTests.Test_WeaponPickupSwapDropsOldGun()) passed++;
 
             UnityEngine.Debug.Log("==================================================");
             UnityEngine.Debug.Log($"[REAL BEHAVIOR RESULTS] {passed}/{total} REAL BEHAVIOR Tests Passed ({(passed == total ? "100% SUCCESS" : "FAILED")})");

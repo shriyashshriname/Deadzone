@@ -74,6 +74,7 @@ namespace Deadzone.Enemies
 
         private void StartLeap()
         {
+            Deadzone.Core.CharacterAnimDriver.PlayAttack(this);
             isLeaping = true;
             leapStartTime = Time.time;
             leapTarget = playerTarget.position;

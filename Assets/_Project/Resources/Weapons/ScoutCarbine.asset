@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3a1f0a2e5b746819c43d8a9e102f741, type: 3}
+  m_Name: ScoutCarbine
+  m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Data.WeaponData
+  weaponName: Scout Carbine
+  weaponType: 0
+  damagePerBullet: 20
+  penetration: 1
+  fireRate: 8
+  bulletSpeed: 48
+  spreadAngle: 2.4
+  bulletsPerShot: 1
+  magazineCapacity: 30
+  reloadDuration: 1.6
+  cameraShakeMagnitude: 0.1
+  cameraShakeDuration: 0.08
+  modelPrefab: {fileID: 2764492804539044183, guid: 2a4a618e9cc19b8449af43f84fc076e5, type: 3}
+  rarity: 0
+  futuristic: 1
+  tracerColor: {r: 0.9, g: 0.9, b: 0.75, a: 1}
+  acousticNoiseRadius: 22

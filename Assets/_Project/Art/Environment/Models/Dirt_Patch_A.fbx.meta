@@ -32,6 +32,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Env_EngineGlow
+    second: {fileID: 2100000, guid: df9de05bddc7cde47b2fb9f410d39af7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Env_Glass
     second: {fileID: 2100000, guid: c4f0d2fc2ec1bf940bbbf2857757ac1d, type: 2}
   - first:
@@ -72,6 +77,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Env_Olive
+    second: {fileID: 2100000, guid: b72d6cd739808c44d871268a3bc528c2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Env_Paint
     second: {fileID: 2100000, guid: 4bf303f9ff9c7d04598120bf2a5a29d0, type: 2}
   - first:
@@ -89,6 +99,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: M_Env_Sandbag
     second: {fileID: 2100000, guid: 870537d568d3df445bb8b92281e39e01, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Env_Signal
+    second: {fileID: 2100000, guid: e757bcdf696c21746b591cbdcdad3fa7, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

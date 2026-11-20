@@ -34,7 +34,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 3157911218552914794}
+  - {fileID: 8298502496663147943}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &1465695909014669266
@@ -119,7 +119,7 @@ MonoBehaviour:
   damagePerShot: 18
   followDistance: 5
   projectilePrefab: {fileID: 100000, guid: b1b2b3b4b5b601010101010101010101, type: 3}
---- !u!1001 &3195760202354533505
+--- !u!1001 &8403872420472156748
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -229,20 +229,25 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1475694473109840587}
+      addedObject: {fileID: 289535555209713076}
   m_SourcePrefab: {fileID: 100100000, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
---- !u!1 &2348898961217100240 stripped
+--- !u!4 &8298502496663147943 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
+  m_PrefabInstance: {fileID: 8403872420472156748}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8674465738305359645 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
-  m_PrefabInstance: {fileID: 3195760202354533505}
+  m_PrefabInstance: {fileID: 8403872420472156748}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1475694473109840587
+--- !u!114 &289535555209713076
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2348898961217100240}
+  m_GameObject: {fileID: 8674465738305359645}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c7f9d9d083f3354ab35a8f74dc319a9, type: 3}
@@ -257,8 +262,4 @@ MonoBehaviour:
   twistSmoothTime: 0.09
   backpedalAngle: 115
   randomizePhase: 1
---- !u!4 &3157911218552914794 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
-  m_PrefabInstance: {fileID: 3195760202354533505}
-  m_PrefabAsset: {fileID: 0}
+  corpseTime: 2.2

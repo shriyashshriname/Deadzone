@@ -115,6 +115,7 @@ namespace Deadzone.Enemies
 
         private void StartTelegraph()
         {
+            Deadzone.Core.CharacterAnimDriver.PlayAttack(this);
             currentState = BossState.Telegraphing;
             stateTimer = Time.time + telegraphDuration;
             chargeDirection = (playerTarget.position - transform.position).normalized;

@@ -15,6 +15,7 @@ namespace Deadzone.Combat
         private Health health;
         private List<Renderer> renderers = new List<Renderer>();
         private List<Color> originalColors = new List<Color>();
+        private List<Color> originalEmission = new List<Color>();
         private Coroutine flashRoutine;
 
         private MaterialPropertyBlock propBlock;
@@ -33,9 +34,12 @@ namespace Deadzone.Combat
         {
             renderers.Clear();
             originalColors.Clear();
+            originalEmission.Clear();
             GetComponentsInChildren(true, renderers);
             foreach (var r in renderers)
             {
+                originalEmission.Add(r != null && r.sharedMaterial != null && r.sharedMaterial.HasProperty(EmissionId) && r.sharedMaterial.IsKeywordEnabled("_EMISSION")
+                    ? r.sharedMaterial.GetColor(EmissionId) : Color.black);
                 if (r != null && r.sharedMaterial != null)
                 {
                     if (r.sharedMaterial.HasProperty(BaseColorId))
@@ -118,7 +122,7 @@ namespace Deadzone.Combat
                     renderers[i].GetPropertyBlock(propBlock);
                     propBlock.SetColor(BaseColorId, originalColors[i]);
                     propBlock.SetColor(ColorId, originalColors[i]);
-                    propBlock.SetColor(EmissionId, Color.black);
+                    propBlock.SetColor(EmissionId, i < originalEmission.Count ? originalEmission[i] : Color.black); // keep built-in glow (robots)
                     renderers[i].SetPropertyBlock(propBlock);
                 }
             }

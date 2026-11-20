@@ -11,6 +11,14 @@ namespace Deadzone.Data
         SniperRifle
     }
 
+    public enum WeaponRarity
+    {
+        Common,
+        Rare,
+        Epic,
+        Legendary
+    }
+
     [CreateAssetMenu(fileName = "NewWeaponData", menuName = "Deadzone/Weapon Data")]
     public class WeaponData : ScriptableObject
     {
@@ -44,6 +52,23 @@ namespace Deadzone.Data
         [Header("Juice & Feel")]
         public float cameraShakeMagnitude = 0.15f;
         public float cameraShakeDuration = 0.08f;
+
+        [Header("Presentation & Loot (M1)")]
+        [Tooltip("Model shown in the player's hand and on the ground as a pickup")]
+        public GameObject modelPrefab;
+        public WeaponRarity rarity = WeaponRarity.Common;
+        [Tooltip("Futuristic energy weapon (glowing tracers, drops from sci-fi enemies)")]
+        public bool futuristic;
+        [Tooltip("Tracer / projectile tint; alpha 0 = keep the default bullet look")]
+        public Color tracerColor = new Color(0, 0, 0, 0);
+
+        public static Color RarityColor(WeaponRarity r) => r switch
+        {
+            WeaponRarity.Rare => new Color(0.13f, 0.83f, 0.93f),
+            WeaponRarity.Epic => new Color(0.66f, 0.33f, 0.97f),
+            WeaponRarity.Legendary => new Color(0.96f, 0.65f, 0.14f),
+            _ => new Color(0.85f, 0.85f, 0.8f),
+        };
 
         [Header("Acoustics & Stealth (D-010)")]
         [Tooltip("Acoustic broadcast radius in meters that alerts nearby infected upon firing")]

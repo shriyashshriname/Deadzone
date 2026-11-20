@@ -16,13 +16,17 @@
 | **Audio** | Weapon gunfire, hit pops, explosions, alerts | Synthesized placeholder audio / Unity audio clips generated via `AudioManager.cs` | Custom Studio IP / MIT Equivalent | Zero external commercial audio assets |
 | **UI Sprites & Fonts** | Health bars, radar blips, hit markers, virtual touch joysticks | Procedural Unity UI shapes and Unity standard UI sprites (`com.unity.ugui`) | Unity Technologies | Zero external paid font licenses |
 | **Characters (3D)** | Rigged humanoid `characterMedium` model + idle/run animations; skins survivorMaleB, survivorFemaleA, zombieA, zombieC (Survivors), zombieFemaleA, zombieMaleA (Retro), criminalMaleA (Protagonists) — regraded to the DEADZONE palette by `scripts/grade_skins.py` | Kenney — Animated Characters Survivors 1.1 / Retro / Protagonists (www.kenney.nl), originals in `Art_Source/CC0/` with each pack's License.txt | **CC0 1.0** (public domain; credit optional) | Added 2026-11-20. Credit "Kenney (kenney.nl)" in game credits as courtesy |
+| **Creatures (3D)** | Demon, Yeti (Ultimate Monsters); Trilobite robot (Sci-Fi Essentials Kit, free Standard tier) — decimated by `scripts/blender_creature_import.py`, monster atlas regraded darker | Quaternius (quaternius.com), originals in `Art_Source/CC0/quaternius_*` (git-ignored) | **CC0 1.0** | Added 2026-11-20 |
+| **Weapons (3D)** | Pistol, Revolver, Rifle, Sniper + textures (Sci-Fi Essentials Kit, Standard) | Quaternius | **CC0 1.0** | Added 2026-11-20 |
+| **Animations** | Zombie idle / walk / scratch, hit knockback (Universal Animation Library 2, Standard) | Quaternius | **CC0 1.0** | Added 2026-11-20 |
+| **Environment kit, helipad, dropship** | 32 procedural low-poly props | `scripts/blender_env_kit.py` (Claude, for DEADZONE) | Studio IP | Added 2026-11-20 |
 | **Code & Architecture** | 51+ modular production C# scripts | Authored by DEADZONE Studio Team | Proprietary Studio IP | Written strictly to studio standards |
 
 ---
 
 ## 2. External Dependencies Audit
 
-- **Third-Party Store Assets:** NONE. CC0 art only (Kenney character packs, see table).
+- **Third-Party Store Assets:** NONE. CC0 art only (Kenney + Quaternius packs, see table).
 - **Paid Assets / Subscriptions:** NONE.
 - **Tracking / Telemetry SDKs:** NONE (All tracking is offline, local JSON in `run_metrics.json`).
 - **External Network APIs:** NONE.

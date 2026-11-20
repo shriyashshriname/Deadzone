@@ -11,9 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3a1f0a2e5b746819c43d8a9e102f741, type: 3}
   m_Name: WeaponData_SMG
+  m_EditorClassIdentifier: 
   weaponName: Vector SMG
   weaponType: 2
   damagePerBullet: 14
+  penetration: 1
   fireRate: 15
   bulletSpeed: 45
   spreadAngle: 5
@@ -22,4 +24,8 @@ MonoBehaviour:
   reloadDuration: 1.4
   cameraShakeMagnitude: 0.1
   cameraShakeDuration: 0.05
+  modelPrefab: {fileID: 3000971512163980261, guid: 27805661787bcfe41ac8d80b6a1b15da, type: 3}
+  rarity: 0
+  futuristic: 0
+  tracerColor: {r: 0, g: 0, b: 0, a: 0}
   acousticNoiseRadius: 16

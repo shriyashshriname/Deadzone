@@ -161,6 +161,7 @@ namespace Deadzone.Enemies
 
         private void AttackPlayer()
         {
+            Deadzone.Core.CharacterAnimDriver.PlayAttack(this);
             nextAttackTime = Time.time + attackInterval;
 
             if (playerTarget.TryGetComponent<IDamageable>(out var damageable))

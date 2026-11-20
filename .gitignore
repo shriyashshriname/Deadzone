@@ -38,3 +38,6 @@ Desktop.ini
 
 # Art verification captures
 Captures/
+
+# Large raw CC0 packs (kept locally; processed assets live under Assets/)
+Art_Source/CC0/quaternius_*/

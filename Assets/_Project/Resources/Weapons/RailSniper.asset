@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3a1f0a2e5b746819c43d8a9e102f741, type: 3}
+  m_Name: RailSniper
+  m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Data.WeaponData
+  weaponName: Rail Sniper
+  weaponType: 4
+  damagePerBullet: 160
+  penetration: 5
+  fireRate: 0.9
+  bulletSpeed: 90
+  spreadAngle: 0.2
+  bulletsPerShot: 1
+  magazineCapacity: 5
+  reloadDuration: 1.9
+  cameraShakeMagnitude: 0.35
+  cameraShakeDuration: 0.08
+  modelPrefab: {fileID: 6355449758784312705, guid: d20bf6af3f8ee084b848afab5a231662, type: 3}
+  rarity: 3
+  futuristic: 1
+  tracerColor: {r: 0.96, g: 0.65, b: 0.14, a: 1}
+  acousticNoiseRadius: 34

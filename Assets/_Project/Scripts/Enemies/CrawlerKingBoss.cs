@@ -126,6 +126,7 @@ namespace Deadzone.Enemies
 
         private void ExecuteLeap(Vector3 dir)
         {
+            Deadzone.Core.CharacterAnimDriver.PlayAttack(this);
             currentState = CrawlerBossState.LeapAttack;
             nextLeapTime = Time.time + (isEnraged ? leapCooldown * 0.6f : leapCooldown);
             OnStateChanged?.Invoke(currentState);
@@ -144,6 +145,7 @@ namespace Deadzone.Enemies
 
         private void ExecuteAcidBarrage()
         {
+            Deadzone.Core.CharacterAnimDriver.PlayAttack(this);
             nextAcidTime = Time.time + (isEnraged ? acidBurstInterval * 0.6f : acidBurstInterval);
 
             if (spitPoint != null && acidProjectilePrefab != null)

@@ -11,6 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3a1f0a2e5b746819c43d8a9e102f741, type: 3}
   m_Name: WeaponData_Sniper
+  m_EditorClassIdentifier: 
   weaponName: Heavy .50 Sniper
   weaponType: 4
   damagePerBullet: 85
@@ -23,4 +24,8 @@ MonoBehaviour:
   reloadDuration: 2.2
   cameraShakeMagnitude: 0.35
   cameraShakeDuration: 0.14
+  modelPrefab: {fileID: 8735160077043433060, guid: a57fcd7801f2e8040af164700e8a6bdc, type: 3}
+  rarity: 0
+  futuristic: 0
+  tracerColor: {r: 0, g: 0, b: 0, a: 0}
   acousticNoiseRadius: 36

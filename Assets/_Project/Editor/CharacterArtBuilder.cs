@@ -20,6 +20,8 @@ namespace Deadzone.Editor
         const string ModelPath = Root + "/Models/DZ_Character.fbx";
         const string IdlePath = Root + "/Models/DZ_Anim_Idle.fbx";
         const string RunPath = Root + "/Models/DZ_Anim_Run.fbx";
+        const string ZombieAnimPath = Root + "/Models/DZ_Anim_Zombie.fbx";   // Quaternius UAL2 (CC0)
+        const string ZombieControllerPath = Root + "/DZ_Zombie.controller";
         const string TexDir = Root + "/Textures";
         const string MatDir = Root + "/Materials";
         const string ControllerPath = Root + "/DZ_Locomotion.controller";
@@ -28,16 +30,15 @@ namespace Deadzone.Editor
         const string VisualName = "Visual";
         const float ModelYaw = 180f; // Kenney rig faces -Z; gameplay roots face +Z (LookRotation)
 
-        // prefab, skin, height multiplier vs collider, run-cycle reference speed (m/s)
-        static readonly (string prefab, string skin, float heightMul, float refSpeed)[] Targets =
+        // prefab, skin, height multiplier vs collider, fallback reference speed (m/s), zombie animation set?
+        // Runner / Spitter / Crawler King are creatures now (CreatureBuilder).
+        static readonly (string prefab, string skin, float heightMul, float refSpeed, bool zombie)[] Targets =
         {
-            ("Zombie_Prefab", "Walker", 1.00f, 4.0f),
-            ("Runner_Prefab", "Runner", 1.00f, 6.0f),
-            ("Spitter_Prefab", "Spitter", 1.00f, 4.0f),
-            ("Tank_Prefab", "Brute", 1.00f, 3.5f),
-            ("Boss_Brute_Prefab", "Brute", 1.00f, 4.0f),
-            ("Rival_Operator_Prefab", "Rival", 1.00f, 6.0f),
-            ("Friendly_Squadmate_Prefab", "Squadmate", 1.00f, 6.5f),
+            ("Zombie_Prefab", "Walker", 1.00f, 1.2f, true),
+            ("Tank_Prefab", "Brute", 1.00f, 1.2f, true),
+            ("Boss_Brute_Prefab", "Brute", 1.00f, 1.5f, true),
+            ("Rival_Operator_Prefab", "Rival", 1.00f, 3.0f, false),
+            ("Friendly_Squadmate_Prefab", "Squadmate", 1.00f, 3.0f, false),
         };
 
         static Avatar avatar;
@@ -48,13 +49,16 @@ namespace Deadzone.Editor
         {
             ConfigureImporters();
             var controller = BuildController();
+            var zombieController = BuildZombieController();
+            var run = LoadClip(RunPath);
+            var zombieWalk = LoadClip(ZombieAnimPath, "walk");
             int n = 0;
             foreach (var t in Targets)
             {
                 string path = $"{Prefabs}/{t.prefab}.prefab";
                 if (!File.Exists(path)) { Debug.LogWarning($"[CharacterArt] Missing {path}"); continue; }
                 var contents = PrefabUtility.LoadPrefabContents(path);
-                ApplyVisual(contents, GetMaterial(t.skin), controller, t.heightMul, t.refSpeed);
+                ApplyVisual(contents, GetMaterial(t.skin), t.zombie ? zombieController : controller, t.heightMul, t.refSpeed, t.zombie ? zombieWalk : run);
                 PrefabUtility.SaveAsPrefabAsset(contents, path);
                 PrefabUtility.UnloadPrefabContents(contents);
                 n++;
@@ -87,6 +91,7 @@ namespace Deadzone.Editor
 
             ConfigureClip(IdlePath, "idle");
             ConfigureClip(RunPath, "run");
+            ConfigureZombieClips();
             ConfigureTextures();
         }
 
@@ -116,6 +121,30 @@ namespace Deadzone.Editor
             take.keepOriginalPositionXZ = true;
             ai.clipAnimations = new[] { take };
             ai.SaveAndReimport();
+        }
+
+        static void ConfigureZombieClips()
+        {
+            if (!File.Exists(ZombieAnimPath)) { Debug.LogWarning("[CharacterArt] No zombie animation file"); return; }
+            var ai = (ModelImporter)AssetImporter.GetAtPath(ZombieAnimPath);
+            ai.animationType = ModelImporterAnimationType.Human;
+            ai.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+            ai.importAnimation = true;
+            ai.materialImportMode = ModelImporterMaterialImportMode.None;
+            ai.SaveAndReimport();
+            var clips = ai.defaultClipAnimations;
+            foreach (var c in clips)
+            {
+                string n = c.name.ToLower();
+                c.loopTime = n.Contains("loop");
+                c.loopPose = c.loopTime;
+                c.lockRootRotation = c.lockRootHeightY = c.lockRootPositionXZ = true;
+                c.keepOriginalOrientation = c.keepOriginalPositionY = c.keepOriginalPositionXZ = true;
+            }
+            ai.clipAnimations = clips;
+            ai.SaveAndReimport();
+            var avatarZ = AssetDatabase.LoadAllAssetsAtPath(ZombieAnimPath).OfType<Avatar>().FirstOrDefault();
+            Debug.Log($"[CharacterArt] Zombie clips: {string.Join(", ", clips.Select(c => c.name))} avatarHuman={avatarZ != null && avatarZ.isHuman}");
         }
 
         static void ConfigureTextures()
@@ -191,8 +220,27 @@ namespace Deadzone.Editor
             AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>()
                 .First(c => !c.name.StartsWith("__preview"));
 
+        static AnimationClip LoadClip(string path, string keyword) =>
+            AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>()
+                .FirstOrDefault(c => !c.name.StartsWith("__preview") && c.name.ToLower().Contains(keyword));
+
+        /// <summary>Zombie set: idle/walk blend + Attack (scratch) and Hit (knockback) one-shots. No death clip:
+        /// CharacterAnimDriver topples the corpse procedurally.</summary>
+        static AnimatorController BuildZombieController()
+        {
+            var ctrl = AnimatorControllerUtil.Reset(ZombieControllerPath);
+            var sm = ctrl.layers[0].stateMachine;
+            ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);
+            ctrl.AddParameter(new AnimatorControllerParameter { name = "AnimSpeed", type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
+            var loco = AnimatorControllerUtil.AddLocomotion(ctrl, sm, (LoadClip(ZombieAnimPath, "idle"), 0f), (LoadClip(ZombieAnimPath, "walk"), 1f));
+            AnimatorControllerUtil.AddOneShot(ctrl, sm, loco, "Attack", LoadClip(ZombieAnimPath, "scratch"));
+            AnimatorControllerUtil.AddOneShot(ctrl, sm, loco, "Hit", LoadClip(ZombieAnimPath, "hit"));
+            EditorUtility.SetDirty(ctrl);
+            return ctrl;
+        }
+
         // ---------- Visual swap ----------
-        static void ApplyVisual(GameObject root, Material mat, RuntimeAnimatorController ctrl, float heightMul, float refSpeed)
+        static void ApplyVisual(GameObject root, Material mat, RuntimeAnimatorController ctrl, float heightMul, float refSpeed, AnimationClip locomotionClip)
         {
             var old = root.transform.Find(VisualName);
             if (old != null) Object.DestroyImmediate(old.gameObject);
@@ -201,17 +249,9 @@ namespace Deadzone.Editor
             var mr = root.GetComponent<MeshRenderer>(); if (mr != null) Object.DestroyImmediate(mr, true);
             var mf = root.GetComponent<MeshFilter>(); if (mf != null) Object.DestroyImmediate(mf, true);
 
-            float height = 2f, centerY = 0f;
-            if (root.TryGetComponent<CharacterController>(out var cc)) { height = cc.height; centerY = cc.center.y; }
-            else if (root.TryGetComponent<CapsuleCollider>(out var cap)) { height = cap.height; centerY = cap.center.y; }
-            float feetY = centerY - height * 0.5f;
-
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath);
             var vis = (GameObject)PrefabUtility.InstantiatePrefab(model, root.transform);
             vis.name = VisualName;
-            vis.transform.localPosition = Vector3.zero;
-            vis.transform.localRotation = Quaternion.Euler(0f, ModelYaw, 0f);
-            vis.transform.localScale = Vector3.one;
 
             var smr = vis.GetComponentInChildren<SkinnedMeshRenderer>();
             smr.sharedMaterial = mat;
@@ -219,20 +259,9 @@ namespace Deadzone.Editor
             smr.updateWhenOffscreen = false;
             smr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
 
-            // Bake the skinned pose and measure it in root-local space, then fit to the collider height, feet on the floor.
-            var baked = new Mesh();
-            smr.BakeMesh(baked, true);
-            var toRoot = root.transform.worldToLocalMatrix * smr.transform.localToWorldMatrix;
-            float minY = float.MaxValue, maxY = float.MinValue;
-            foreach (var v in baked.vertices)
-            {
-                float y = toRoot.MultiplyPoint3x4(v).y;
-                minY = Mathf.Min(minY, y); maxY = Mathf.Max(maxY, y);
-            }
-            Object.DestroyImmediate(baked);
-            float s = height * 0.97f * heightMul / Mathf.Max(maxY - minY, 1e-4f);
-            vis.transform.localScale = Vector3.one * s;
-            vis.transform.localPosition = new Vector3(0f, feetY - minY * s, 0f);
+            // Fit to the collider height in world metres (cancels non-uniform root scale), feet on the floor.
+            VisualFit.ColliderBottomWorldY(root, out float colliderHeight);
+            VisualFit.Fit(root, vis, VisualFit.Mode.Height, colliderHeight * 0.97f * heightMul, ModelYaw);
 
             var anim = vis.GetComponent<Animator>() ?? vis.AddComponent<Animator>();
             anim.runtimeAnimatorController = ctrl;
@@ -241,50 +270,11 @@ namespace Deadzone.Editor
             anim.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
 
             var driver = vis.AddComponent<CharacterAnimDriver>();
-            float measured = MeasureRunGroundSpeed(vis, anim);
+            var feet = new[] { anim.GetBoneTransform(HumanBodyBones.LeftFoot), anim.GetBoneTransform(HumanBodyBones.RightFoot) };
+            float measured = isHuman && feet[0] != null ? VisualFit.MeasureGroundSpeed(vis, locomotionClip, feet) : 0f;
             driver.Configure(measured > 0f ? measured : refSpeed);
             Debug.Log($"[CharacterArt] {root.name}: run cycle ground speed {measured:0.00} m/s (fallback {refSpeed})");
             EditorUtility.SetDirty(driver);
-        }
-
-        /// <summary>
-        /// Samples the run clip and measures how fast a planted foot slides backwards (= ground speed
-        /// at 1x playback) in world metres for this character's final scale. 0 if it can't measure.
-        /// </summary>
-        static float MeasureRunGroundSpeed(GameObject vis, Animator anim)
-        {
-            if (!isHuman) return 0f;
-            var run = LoadClip(RunPath);
-            var feet = new[] { anim.GetBoneTransform(HumanBodyBones.LeftFoot), anim.GetBoneTransform(HumanBodyBones.RightFoot) };
-            if (feet[0] == null || feet[1] == null) return 0f;
-
-            var saved = vis.GetComponentsInChildren<Transform>().Select(x => (x, x.localPosition, x.localRotation, x.localScale)).ToArray();
-            const int N = 48;
-            float dt = run.length / N;
-            var pos = new Vector3[2, N + 1];
-            for (int i = 0; i <= N; i++)
-            {
-                run.SampleAnimation(vis, i * dt);
-                for (int f = 0; f < 2; f++) pos[f, i] = feet[f].position;
-            }
-            foreach (var (x, p, r, s) in saved) { x.localPosition = p; x.localRotation = r; x.localScale = s; }
-
-            var speeds = new System.Collections.Generic.List<float>();
-            for (int f = 0; f < 2; f++)
-            {
-                var ys = Enumerable.Range(0, N + 1).Select(i => pos[f, i].y).OrderBy(y => y).ToArray();
-                float stanceY = ys[(int)(N * 0.35f)];
-                for (int i = 0; i < N; i++)
-                {
-                    if (pos[f, i].y > stanceY || pos[f, i + 1].y > stanceY) continue;
-                    var d = pos[f, i + 1] - pos[f, i]; d.y = 0f;
-                    speeds.Add(d.magnitude / dt);
-                }
-            }
-            if (speeds.Count == 0) return 0f;
-            speeds.Sort();
-            float median = speeds[speeds.Count / 2];
-            return (median > 0.5f && median < 15f) ? median : 0f;
         }
 
         static int ApplyToScenePlayer(RuntimeAnimatorController ctrl)
@@ -293,7 +283,7 @@ namespace Deadzone.Editor
             int n = 0;
             foreach (var pc in Object.FindObjectsByType<Deadzone.Player.PlayerController>(FindObjectsInactive.Include))
             {
-                ApplyVisual(pc.gameObject, GetMaterial("Operator"), ctrl, 1f, 7f);
+                ApplyVisual(pc.gameObject, GetMaterial("Operator"), ctrl, 1f, 3f, LoadClip(RunPath));
                 n++;
             }
             EditorSceneManager.MarkSceneDirty(scene);
@@ -332,7 +322,7 @@ namespace Deadzone.Editor
                 var root = new GameObject(skins[i]);
                 root.AddComponent<CapsuleCollider>();
                 root.transform.position = new Vector3((i - 3) * 1.7f, 1f, 0f);
-                ApplyVisual(root, GetMaterial(skins[i]), ctrl, heightMul[i], 5f);
+                ApplyVisual(root, GetMaterial(skins[i]), ctrl, heightMul[i], 3f, run);
                 // Bind pose on purpose: humanoid SampleAnimation can override body orientation,
                 // which would hide a facing bug. The arrow marks the gameplay root's +Z (aim direction).
                 var arrow = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -383,6 +373,14 @@ namespace Deadzone.Editor
             Render("scene_close", target + new Vector3(0f, 3.2f, -6f), Quaternion.Euler(22f, 0f, 0f), 50f);
             Render("scene_overview", new Vector3(0f, 75f, -62f), Quaternion.Euler(50f, 0f, 0f), 60f);
             Render("scene_corner", new Vector3(-30f, 16f, -46f), Quaternion.Euler(50f, 20f, 0f), 55f);
+            var shipPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Environment/Dropship.prefab");
+            if (shipPrefab != null)
+            {
+                var ship = (GameObject)PrefabUtility.InstantiatePrefab(shipPrefab);
+                ship.transform.SetPositionAndRotation(new Vector3(0f, 0f, 0f), Quaternion.Euler(0f, 30f, 0f));
+                player.gameObject.SetActive(false);
+                Render("scene_helipad", new Vector3(13f, 10f, -15f), Quaternion.Euler(30f, -40f, 0f), 50f);
+            }
             EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single); // discard the temp enemies
         }
 

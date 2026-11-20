@@ -19,7 +19,7 @@ PAL = {  # art bible derived (Docs/ROADMAP_NEXT.md §4); mirrored in Environment
     "MetalDark": "2F3336", "Wood": "5C4632", "WoodDark": "3E3024", "Grass": "6F8240",
     "GrassDry": "A79C57", "GrassDark": "4A5A2E", "Dirt": "54473A", "Hazard": "C9A227",
     "Rubber": "1F2124", "Paint": "5E6B5C", "Glass": "22303A", "Sandbag": "9C8A62",
-    "Bulb": "FFB15C", "Cone": "D9662B", "White": "D8D4C8", "Leaf": "4C5A2C",
+    "Bulb": "FFB15C", "Cone": "D9662B", "White": "D8D4C8", "Leaf": "4C5A2C", "Signal": "22D3EE", "EngineGlow": "7FE9FF", "Olive": "4F5A3C",
 }
 
 
@@ -390,6 +390,59 @@ def ground(name, seed, r, outer, inner):
     flat_patch(r * 0.3, inner, seed + 9, 10, 0.01); PARTS[-1].location = (-r * .4, r * .3, 0)
     export(name)
 
+
+def ring(r_in, r_out, z, mat, seg=32):
+    me = bpy.data.meshes.new("ring"); bm = bmesh.new()
+    inner = [bm.verts.new((math.cos(i / seg * math.tau) * r_in, math.sin(i / seg * math.tau) * r_in, z)) for i in range(seg)]
+    outer = [bm.verts.new((math.cos(i / seg * math.tau) * r_out, math.sin(i / seg * math.tau) * r_out, z)) for i in range(seg)]
+    for i in range(seg):
+        j = (i + 1) % seg
+        bm.faces.new((inner[i], outer[i], outer[j], inner[j]))
+    bm.to_mesh(me); bm.free()
+    o = bpy.data.objects.new("ring", me); bpy.context.collection.objects.link(o)
+    return _finish(o, mat, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+
+
+def helipad(name):
+    reset()
+    cyl(5.6, 0.16, (0, 0, 0.08), (0, 0, 22.5), "ConcreteDark", 8)
+    ring(4.7, 5.0, 0.17, "Hazard")
+    ring(2.9, 3.05, 0.17, "White")
+    box((0.32, 2.4, 0.02), (-0.75, 0, 0.17), (0, 0, 0), "White")   # H
+    box((0.32, 2.4, 0.02), (0.75, 0, 0.17), (0, 0, 0), "White")
+    box((1.2, 0.3, 0.02), (0, 0, 0.17), (0, 0, 0), "White")
+    for i in range(8):
+        a = i / 8 * math.tau + math.pi / 8
+        box((0.22, 0.22, 0.12), (math.cos(a) * 5.35, math.sin(a) * 5.35, 0.2), (0, 0, math.degrees(a)), "Signal")
+    for i in range(4):  # access ramps
+        a = i / 4 * math.tau
+        box((1.6, 1.0, 0.08), (math.cos(a) * 6.0, math.sin(a) * 6.0, 0.05), (0, 0, math.degrees(a)), "Concrete")
+    export(name)
+
+
+def dropship(name):
+    reset()
+    # fuselage (nose toward +Y in Blender = +Z forward in Unity after export)
+    box((2.3, 6.4, 1.7), (0, 0, 1.75), (0, 0, 0), "Olive", 0.12)
+    box((2.0, 1.8, 1.2), (0, 3.7, 1.95), (0, 0, 0), "Olive", 0.1)
+    box((1.7, 1.3, 0.75), (0, 4.0, 2.45), (-18, 0, 0), "Glass", 0.06)        # canopy
+    box((1.2, 1.4, 0.9), (0, 4.75, 1.85), (12, 0, 0), "Olive", 0.1)           # nose
+    box((2.2, 0.15, 1.4), (0, -3.25, 1.45), (-35, 0, 0), "MetalDark")         # rear ramp
+    box((1.6, 1.2, 0.08), (0, -0.5, 2.62), (0, 0, 0), "Hazard")              # roof stripe
+    for s in (-1, 1):
+        box((3.0, 1.6, 0.22), (s * 2.6, -0.2, 2.1), (0, s * -6, 0), "Olive", 0.06)        # wing
+        cyl(0.62, 1.7, (s * 4.05, -0.2, 2.1), (0, 0, 0), "MetalDark", 12)                  # VTOL nacelle
+        cyl(0.5, 0.06, (s * 4.05, -0.2, 1.22), (0, 0, 0), "EngineGlow", 12)                # engine glow ring
+        box((0.12, 1.4, 1.3), (s * 0.75, -3.0, 3.0), (0, s * 12, 0), "Olive", 0.04)        # tail fins
+        box((0.16, 4.6, 0.16), (s * 1.05, 0.2, 0.12), (0, 0, 0), "MetalDark")              # skid
+        for y in (-1.3, 1.6):
+            box((0.12, 0.12, 0.85), (s * 1.0, y, 0.55), (0, s * -12, 0), "MetalDark")      # strut
+        box((0.1, 0.1, 0.1), (s * 1.15, 4.3, 1.6), (0, 0, 0), "Bulb")                      # nav lights
+    export(name)
+
+
+helipad("Helipad")
+dropship("Dropship")
 
 ground("Ground_Overgrowth", 21, 5.5, "GrassDark", "Grass")
 ground("Ground_Dirt_Large", 22, 6.0, "Dirt", "GrassDark")

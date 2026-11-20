@@ -133,3 +133,22 @@ transform-driven enemies sit on the floor), `HitFlash` now also flashes emission
   simple steering). Now saved to `Scenes/Graybox_Sandbox_NavMesh.asset` on every environment build.
 - Movement: `CharacterAnimDriver` now twists the body toward strafe direction, plays the run backwards when
   backpedalling, and matches playback to the run cycle's measured ground speed (per character, at build time).
+
+## 8. Founder direction 2026-11-20 and M1 progress
+
+Decisions: grounded-stylised look; Solo/Duo/Squad with AI teammates first (online = M5); milestones
+M1 combat+loot+helipad → M2 lobby/profile/inventory/modes → M3 sci-fi Zone 2 → M4 realism/terrain → M5 online;
+enemies = 1–2 zombie types + Quaternius robots + dark monsters (no cartoon monsters).
+
+**M1 done (Build #4):**
+- Roster: Walker + Brute zombies (UAL2 shamble/scratch/knockback); Runner → Demon, Spitter → Trilobite robot,
+  Crawler King → Yeti (each: idle/walk/run/attack/hit/death). Corpses fall, linger, sink. Monsters decimated to budget.
+- Horde: walkers ×1.8, spawning 30% faster, lower HP (walker 40, runner 35, spitter 40, tank 140); shamblers slowed to 1.7 m/s.
+- Weapons: 5 futuristic guns in `Resources/Weapons` (Scout Carbine C, Pulse Pistol R, Plasma Rifle E, Ion Revolver E,
+  Rail Sniper L) with coloured tracers; classic guns now have models; guns visible in the player's hand.
+- Gun drops: 7% from normal enemies, 30% from sci-fi enemies, 100% from bosses (rarity-biased); glowing pickups;
+  full loadout swaps the held gun and drops the old one. Tests 12–13 cover the pool and the swap.
+- Helipad + dropship: insertion at run start; evac fly-in + landing when extraction unlocks; boarding + take-off
+  before the debrief.
+
+**M1 remaining:** upgradeable backpack ("storage") with carried consumables; ammo per weapon; pickup prompt UI.

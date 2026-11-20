@@ -25,6 +25,8 @@ namespace Deadzone.Combat
         public event Action<int, int> OnAmmoChanged;
         public event Action OnReloadStarted;
         public event Action OnReloadCompleted;
+        public event Action<WeaponData> OnWeaponDataChanged;
+        private MaterialPropertyBlock tracerBlock;
 
         public WeaponData Data => data;
         public int CurrentAmmo => currentAmmo;
@@ -37,6 +39,7 @@ namespace Deadzone.Combat
             currentAmmo = data.magazineCapacity;
             isReloading = false;
             OnAmmoChanged?.Invoke(currentAmmo, data.magazineCapacity);
+            OnWeaponDataChanged?.Invoke(data);
         }
 
         private void Awake()
@@ -117,6 +120,21 @@ namespace Deadzone.Combat
                 float dmg = data.damagePerBullet * perkMult;
                 if (projObj.TryGetComponent<Projectile>(out var proj)) proj.Initialize(dmg, data.bulletSpeed, data.penetration, team);
                 else projObj.AddComponent<Projectile>().Initialize(dmg, data.bulletSpeed, data.penetration, team);
+                TintTracer(projObj);
+            }
+        }
+
+        private void TintTracer(GameObject projObj)
+        {
+            if (data.tracerColor.a <= 0f) return;
+            if (tracerBlock == null) tracerBlock = new MaterialPropertyBlock();
+            foreach (var r in projObj.GetComponentsInChildren<Renderer>())
+            {
+                if (r is TrailRenderer tr) { tr.startColor = data.tracerColor; tr.endColor = new Color(data.tracerColor.r, data.tracerColor.g, data.tracerColor.b, 0f); continue; }
+                r.GetPropertyBlock(tracerBlock);
+                tracerBlock.SetColor("_BaseColor", data.tracerColor);
+                tracerBlock.SetColor("_EmissionColor", data.tracerColor * 3f);
+                r.SetPropertyBlock(tracerBlock);
             }
         }
 

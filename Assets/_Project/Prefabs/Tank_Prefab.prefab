@@ -34,7 +34,7 @@ Transform:
   m_LocalScale: {x: 1.4, y: 1.3, z: 1.4}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2059506581238834358}
+  - {fileID: 479751911066438150}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &545439305822805599
@@ -72,7 +72,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1b2c3d4e5f604040404040404040404, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Core.Health
-  maxHealth: 180
+  maxHealth: 140
   currentHealth: 180
 --- !u!114 &8091908647299924493
 MonoBehaviour:
@@ -86,7 +86,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1b2c3d4e5f644444444444444444444, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Enemies.TankEnemy
-  moveSpeed: 2.2
+  moveSpeed: 1.9
   damage: 45
   attackRange: 2
   attackInterval: 1.8
@@ -117,7 +117,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Core.TeamMember
   teamId: 0
---- !u!1001 &1954121538494825309
+--- !u!1001 &81859393411575277
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -127,15 +127,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.5153151
+      value: 0.47850683
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.5153151
+      value: 0.51531506
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.5153151
+      value: 0.47850683
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalPosition.x
@@ -143,7 +143,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.0003519
+      value: -1.0003518
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_LocalPosition.z
@@ -208,7 +208,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 5d0c17e5a16ff0244a0a8295907514f8, type: 2}
+      objectReference: {fileID: 9100000, guid: 7348d16d9d2b38c4ebcef95315773608, type: 2}
     - target: {fileID: 5866666021909216657, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -227,26 +227,31 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7343268696946356709}
+      addedObject: {fileID: 6679614393772900106}
   m_SourcePrefab: {fileID: 100100000, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
---- !u!1 &1720101272580898316 stripped
+--- !u!4 &479751911066438150 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
+  m_PrefabInstance: {fileID: 81859393411575277}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1000849694829465788 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
-  m_PrefabInstance: {fileID: 1954121538494825309}
+  m_PrefabInstance: {fileID: 81859393411575277}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7343268696946356709
+--- !u!114 &6679614393772900106
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1720101272580898316}
+  m_GameObject: {fileID: 1000849694829465788}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c7f9d9d083f3354ab35a8f74dc319a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Deadzone.Core.CharacterAnimDriver
-  runReferenceSpeed: 3.9812605
+  runReferenceSpeed: 0.8867362
   moveEnter: 0.35
   idleExit: 0.15
   speedDamping: 0.08
@@ -255,8 +260,4 @@ MonoBehaviour:
   twistSmoothTime: 0.09
   backpedalAngle: 115
   randomizePhase: 1
---- !u!4 &2059506581238834358 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fc2e6ab746d782840b8d0d3c23a69d84, type: 3}
-  m_PrefabInstance: {fileID: 1954121538494825309}
-  m_PrefabAsset: {fileID: 0}
+  corpseTime: 2.2

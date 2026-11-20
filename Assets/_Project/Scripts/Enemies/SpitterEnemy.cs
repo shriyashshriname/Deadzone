@@ -76,6 +76,7 @@ namespace Deadzone.Enemies
 
         private void SpitAcid()
         {
+            Deadzone.Core.CharacterAnimDriver.PlayAttack(this);
             nextSpitTime = Time.time + spitInterval;
             if (!acidPrefab) return;
 

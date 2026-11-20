@@ -11,9 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3a1f0a2e5b746819c43d8a9e102f741, type: 3}
   m_Name: WeaponData_Shotgun
+  m_EditorClassIdentifier: 
   weaponName: Pump Shotgun
   weaponType: 1
   damagePerBullet: 15
+  penetration: 1
   fireRate: 1.2
   bulletSpeed: 35
   spreadAngle: 12
@@ -22,4 +24,8 @@ MonoBehaviour:
   reloadDuration: 2.5
   cameraShakeMagnitude: 0.35
   cameraShakeDuration: 0.15
+  modelPrefab: {fileID: 8386573224746768770, guid: 9db375924b7a81a43bda9a294261a278, type: 3}
+  rarity: 0
+  futuristic: 0
+  tracerColor: {r: 0, g: 0, b: 0, a: 0}
   acousticNoiseRadius: 32

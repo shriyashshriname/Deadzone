@@ -103,6 +103,13 @@ namespace Deadzone.Core
         {
             isExtracted = true;
             OnExtractionCompleted?.Invoke();
+            // Let the dropship board the player and fly off before the debrief appears.
+            if (DropshipController.Instance != null) DropshipController.Instance.Depart(FinishExtraction);
+            else FinishExtraction();
+        }
+
+        private void FinishExtraction()
+        {
 
             int credits = GameManager.Instance != null ? GameManager.Instance.CreditsEarned : 0;
             int kills = GameManager.Instance != null ? GameManager.Instance.KillCount : 0;

@@ -33,6 +33,7 @@ namespace Deadzone.Editor
             {"GrassDry","A79C57"},{"GrassDark","4A5A2E"},{"Dirt","54473A"},{"Hazard","C9A227"},
             {"Rubber","1F2124"},{"Paint","5E6B5C"},{"Glass","22303A"},{"Sandbag","9C8A62"},
             {"Bulb","FFB15C"},{"Cone","D9662B"},{"White","D8D4C8"},{"Leaf","4C5A2C"},
+            {"Signal","22D3EE"},{"EngineGlow","7FE9FF"},{"Olive","4F5A3C"},
         };
 
         enum Col { None, Box, Base }
@@ -49,6 +50,7 @@ namespace Deadzone.Editor
             {"Traffic_Cone",(Col.None,true)},{"Sign_Bent",(Col.Base,true)},{"Barbed_Wire",(Col.Box,true)},
             {"Dirt_Patch_A",(Col.None,false)},{"Dirt_Patch_B",(Col.None,false)},{"Barrier_Broken",(Col.Box,true)},
             {"Debris_Planks",(Col.None,false)},{"Ground_Overgrowth",(Col.None,false)},{"Ground_Dirt_Large",(Col.None,false)},
+            {"Helipad",(Col.None,false)},{"Dropship",(Col.None,true)},
         };
 
         // Cluster themes: (prop, count, radius)
@@ -88,10 +90,10 @@ namespace Deadzone.Editor
                 m.SetFloat("_Smoothness", kv.Key.StartsWith("Metal") || kv.Key == "Glass" ? 0.35f : 0.08f);
                 m.SetFloat("_Metallic", 0f);
                 m.enableInstancing = true;
-                if (kv.Key == "Bulb")
+                if (kv.Key == "Bulb" || kv.Key == "Signal" || kv.Key == "EngineGlow")
                 {
                     m.EnableKeyword("_EMISSION");
-                    m.SetColor("_EmissionColor", c * 2.5f);
+                    m.SetColor("_EmissionColor", c * (kv.Key == "EngineGlow" ? 4f : 2.5f));
                     m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
                 }
                 EditorUtility.SetDirty(m);
@@ -318,6 +320,7 @@ namespace Deadzone.Editor
             }
 
             ApplyAtmosphere();
+            SetupHelipad(pf, root);
             FixSquadmateHeight();
             BakeAndSaveNavMesh();
 
@@ -387,6 +390,22 @@ namespace Deadzone.Editor
             if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
             if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", 0.1f);
             EditorUtility.SetDirty(m);
+        }
+
+        /// <summary>Swap the flat cyan extraction disc for the helipad and give the zone its dropship.</summary>
+        static void SetupHelipad(Dictionary<string, GameObject> pf, Transform root)
+        {
+            var zone = Object.FindAnyObjectByType<ExtractionZone>();
+            if (zone == null) { Debug.LogWarning("[Env] No ExtractionZone"); return; }
+            if (zone.TryGetComponent<Renderer>(out var zr)) zr.enabled = false; // keep its trigger collider
+            var pad = (GameObject)PrefabUtility.InstantiatePrefab(pf["Helipad"], root);
+            pad.name = "Helipad";
+            pad.transform.position = new Vector3(zone.transform.position.x, 0.005f, zone.transform.position.z);
+            var ds = zone.GetComponent<DropshipController>() ?? zone.gameObject.AddComponent<DropshipController>();
+            var so = new SerializedObject(ds);
+            so.FindProperty("shipPrefab").objectReferenceValue = pf["Dropship"];
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Env] Helipad + dropship set up at extraction zone");
         }
 
         static void FixSquadmateHeight()
