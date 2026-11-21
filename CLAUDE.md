@@ -32,9 +32,15 @@ Plan and decisions: `Docs/ROADMAP_NEXT.md` (milestones M1→M5), `Docs/DECISION_
 - PlaySim facing check uses the 3-sample sustained angle; raw single-frame spikes to ~180° are normal turns.
 - NEVER edit project files while a batchmode Unity run is going: it recompiles mid-play, statics reset
   (WaveManager/PlayerRevive Instances = null) and the sim "stalls" for no game reason.
-- Portrait is the shipping orientation (Build #8+, locked in BuildScript). HUD panels use `UI/UIScale`
-  (480-unit short side, safe area); raw-pixel OnGUI (touch sticks, world labels) resets GUI.matrix itself.
-  Touch layout: `MobileControlsManager.RecalculatePortraitLayout`. Camera: TopDownCamera portrait framing.
+- LANDSCAPE is the shipping orientation (founder, Build #9/#10; portrait was tried in #8 and rejected).
+  APK starts LandscapeLeft (BuildScript) and GameManager allows both landscape sides at runtime; the
+  PlayerSettings autorotate flags did NOT reach the manifest ("fullUser"), so don't rely on them.
+  Portrait code paths (TopDownCamera portrait framing, RecalculatePortraitLayout) are kept but unused.
+  HUD panels use `UI/UIScale` (480-unit short side, safe area); raw-pixel OnGUI resets GUI.matrix itself.
+- Upgrades: `UI/UpgradeDraft` popup after rounds 2, 4, 5, 6, 7 then every 2nd; 3 random AFFORDABLE picks,
+  15 s, next round waits. Prices from field gold (gem = 10 gold, ~28% of kills). Old always-open shop removed.
+  IMGUI popups must set GUI.depth < 0 to draw above other HUD scripts.
+- Capture tests: ScreenCapture grabs at END of frame; don't change UI state in the same frame as Shot().
 - Weapon pickup is manual (PICK UP / E); sniper = hold to aim (PrecisionAimLine), release to fire.
   PlaySim runs a scripted mechanics test for both. Scripted InputCommand must set selectSlot = -1
   (0 means "select slot 1" every frame).

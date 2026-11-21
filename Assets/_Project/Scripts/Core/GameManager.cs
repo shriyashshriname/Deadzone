@@ -27,6 +27,13 @@ namespace Deadzone.Core
 
         private void Awake()
         {
+            // Landscape only, either side (founder, Build #9). Set at runtime: reliable on Android.
+            Screen.autorotateToPortrait = false;
+            Screen.autorotateToPortraitUpsideDown = false;
+            Screen.autorotateToLandscapeLeft = true;
+            Screen.autorotateToLandscapeRight = true;
+            if (Application.isMobilePlatform) Screen.orientation = ScreenOrientation.AutoRotation;
+
             if (Instance == null)
             {
                 Instance = this;

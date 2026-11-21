@@ -10,12 +10,16 @@ namespace Deadzone.UI
         private Health playerHealth;
         private Weapon currentWeapon;
         private PlayerAbilities playerAbilities;
-        private bool isShopOpen = false;
         private bool isPaused = false;
+        private GUIStyle hpTextStyle;
 
         public static bool IsMenuOpen { get; private set; }
 
-        private void Start() => FindPlayerReferences();
+        private void Start()
+        {
+            FindPlayerReferences();
+            if (GetComponent<OverheadHealthBars>() == null) gameObject.AddComponent<OverheadHealthBars>();
+        }
 
         private void FindPlayerReferences()
         {
@@ -29,9 +33,8 @@ namespace Deadzone.UI
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.Tab)) isShopOpen = !isShopOpen;
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P)) TogglePause();
-            IsMenuOpen = isShopOpen || isPaused;
+            IsMenuOpen = isPaused || UpgradeDraft.IsOpenNow;
         }
 
         public void TogglePause()
@@ -47,31 +50,31 @@ namespace Deadzone.UI
             Color oldColor = GUI.color;
             bool isMobile = MobileControlsManager.IsMobileActive;
 
-            // 1. Health Bar & Shop Toggle (Top Left)
+            // 1. Health bar (top left): clean green bar, number centred on it. Upgrades come from the
+            //    round-end UpgradeDraft popup now (no always-open shop).
             if (playerHealth != null)
             {
                 float hpPct = Mathf.Clamp01(playerHealth.CurrentHealth / playerHealth.MaxHealth);
-                GUI.Box(new Rect(16, 16, 210, 28), "");
-                GUI.color = hpPct > 0.35f ? new Color(0.2f, 0.9f, 0.3f) : new Color(0.95f, 0.2f, 0.2f);
-                GUI.Box(new Rect(18, 18, 206 * hpPct, 24), "");
+                BarDrawer.Draw(new Rect(16, 16, 210, 24), hpPct, BarDrawer.Green, 2f);
+                if (hpTextStyle == null) hpTextStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, fontSize = 13 };
+                string hpText = $"HP  {Mathf.CeilToInt(playerHealth.CurrentHealth)} / {Mathf.CeilToInt(playerHealth.MaxHealth)}";
+                GUI.color = new Color(0f, 0f, 0f, 0.85f);
+                GUI.Label(new Rect(17, 17, 210, 24), hpText, hpTextStyle);
                 GUI.color = Color.white;
-                GUI.Label(new Rect(24, 20, 200, 22), $"♥ {Mathf.CeilToInt(playerHealth.CurrentHealth)} / {playerHealth.MaxHealth}");
-
-                string shopText = isShopOpen ? (isMobile ? "CLOSE SHOP" : "CLOSE [B]") : (isMobile ? "UPGRADE SHOP" : "UPGRADE SHOP [B]");
-                if (GUI.Button(new Rect(16, 48, 130, 26), shopText)) isShopOpen = !isShopOpen;
+                GUI.Label(new Rect(16, 16, 210, 24), hpText, hpTextStyle);
             }
 
             // 2. Sector Mission Objectives (Top Left)
             int onlineStations = PowerSubstation.TotalSubstationsOnline;
             int totalStations = Mathf.Max(2, PowerSubstation.TotalSubstationsCount);
-            GUI.Box(new Rect(16, 78, 210, 56), "");
+            GUI.Box(new Rect(16, 46, 210, 56), "");
             GUI.color = new Color(0.2f, 0.9f, 1f);
-            GUI.Label(new Rect(22, 80, 200, 18), "=== SECTOR OBJECTIVES ===");
+            GUI.Label(new Rect(22, 48, 200, 18), "=== SECTOR OBJECTIVES ===");
             GUI.color = onlineStations >= totalStations ? new Color(0.2f, 1f, 0.4f) : Color.white;
-            GUI.Label(new Rect(22, 98, 200, 18), $"GRID: {onlineStations}/{totalStations} ONLINE");
+            GUI.Label(new Rect(22, 66, 200, 18), $"GRID: {onlineStations}/{totalStations} ONLINE");
             bool evacReady = ExtractionZone.Instance != null && ExtractionZone.Instance.IsActive;
             GUI.color = evacReady ? new Color(0.2f, 1f, 0.4f) : new Color(0.7f, 0.7f, 0.7f);
-            GUI.Label(new Rect(22, 114, 200, 18), evacReady ? "EVAC: READY AT CENTER" : "EVAC: STANDBY");
+            GUI.Label(new Rect(22, 82, 200, 18), evacReady ? "EVAC: READY AT CENTER" : "EVAC: STANDBY");
             GUI.color = Color.white;
 
             // 3. Tactical Abilities (Desktop Only - Mobile buttons handle this)
@@ -121,7 +124,7 @@ namespace Deadzone.UI
 
             float waveX = isMobile ? UIScale.W - 240 : UIScale.W - 220;
             GUI.Box(new Rect(waveX, 16, isMobile ? 185 : 200, 52), "");
-            GUI.Label(new Rect(waveX + 8, 18, 180, 18), $"WAVE {wave}  |  CR {credits}");
+            GUI.Label(new Rect(waveX + 8, 18, 180, 18), $"WAVE {wave}  |  GOLD {credits}");
             GUI.color = hostiles > 0 ? new Color(1f, 0.4f, 0.4f) : Color.white;
             GUI.Label(new Rect(waveX + 8, 36, 180, 18), isIntermission ? "CLEARED! REGROUP" : $"KILLS: {kills} | HOSTILES: {hostiles}");
             GUI.color = Color.white;
@@ -169,7 +172,6 @@ namespace Deadzone.UI
                 GUI.color = Color.white;
             }
 
-            if (isShopOpen) DrawUpgradeShop(credits, isMobile);
             if (isPaused) DrawPauseMenu(isMobile);
 
             bool isGameOver = (playerHealth != null && playerHealth.IsDead) || (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.GameOver);
@@ -195,56 +197,6 @@ namespace Deadzone.UI
             if (GUI.Button(new Rect(pX + 30, pY + 55, pW - 60, 36), resumeText)) TogglePause();
             if (GUI.Button(new Rect(pX + 30, pY + 105, pW - 60, 36), restartText)) { TogglePause(); OnRestartButtonClicked(); }
             if (GUI.Button(new Rect(pX + 30, pY + 155, pW - 60, 36), isMobile ? "QUIT GAME" : "QUIT TO DESKTOP")) Application.Quit();
-        }
-
-        private void DrawUpgradeShop(int credits, bool isMobile)
-        {
-            float pW = 460, pH = 334, pX = (UIScale.W - pW) * 0.5f, pY = (UIScale.H - pH) * 0.5f;
-            GUI.Box(new Rect(pX, pY, pW, pH), "");
-            GUI.Box(new Rect(pX + 4, pY + 4, pW - 8, pH - 8), "");
-            GUI.color = new Color(0.2f, 0.9f, 1.0f);
-            GUI.Label(new Rect(pX + 20, pY + 16, pW - 40, 25), $"=== FIELD UPGRADES ===   [CREDITS: {credits}]");
-            GUI.color = Color.white;
-
-            DrawPerkButton(pX + 20, pY + 48, pW - 40, PerkType.DamageBoost, "+20% Bullet Damage", 40, credits);
-            DrawPerkButton(pX + 20, pY + 92, pW - 40, PerkType.SpeedBoost, "+15% Movement Speed", 30, credits);
-            DrawPerkButton(pX + 20, pY + 136, pW - 40, PerkType.HealthBoost, "+35 Max HP & Full Heal", 50, credits);
-            DrawPerkButton(pX + 20, pY + 180, pW - 40, PerkType.FireRateBoost, "+25% Fire Rate", 45, credits);
-            DrawPerkButton(pX + 20, pY + 224, pW - 40, PerkType.DashCooldownBoost, "-20% Dash Cooldown", 35, credits);
-            DrawBackpackUpgrade(pX + 20, pY + 268, pW - 40, credits);
-
-            if (GUI.Button(new Rect(pX + pW - 100, pY + 14, 85, 24), "CLOSE ✕")) isShopOpen = false;
-        }
-
-        private void DrawBackpackUpgrade(float x, float y, float w, int credits)
-        {
-            var bag = Backpack.Instance;
-            if (bag == null) return;
-            if (bag.IsMaxTier)
-            {
-                GUI.color = new Color(0.6f, 0.9f, 1f);
-                GUI.Box(new Rect(x, y, w, 38), $"BACKPACK MAXED ({bag.Capacity} slots)");
-                GUI.color = Color.white;
-                return;
-            }
-            int cost = bag.NextUpgradeCost;
-            bool canAfford = credits >= cost;
-            GUI.color = canAfford ? new Color(0.6f, 0.95f, 1f) : new Color(0.6f, 0.6f, 0.6f, 0.8f);
-            int next = Backpack.TierSlots[bag.Tier + 1];
-            if (GUI.Button(new Rect(x, y, w, 38), $"BACKPACK {bag.Capacity} → {next} SLOTS — permanent  ({cost} Credits)") && canAfford)
-                bag.TryUpgrade();
-            GUI.color = Color.white;
-        }
-
-        private void DrawPerkButton(float x, float y, float w, PerkType type, string name, int cost, int currentCredits)
-        {
-            bool canAfford = currentCredits >= cost;
-            GUI.color = canAfford ? Color.white : new Color(0.6f, 0.6f, 0.6f, 0.8f);
-            if (GUI.Button(new Rect(x, y, w, 38), $"{name}  ({cost} Credits)") && canAfford && PlayerPerks.Instance != null)
-            {
-                PlayerPerks.Instance.TryPurchaseUpgrade(type, cost);
-            }
-            GUI.color = Color.white;
         }
 
         private void DrawEndModal(string title, string subtitle, Color headerColor, int wave, int kills, int credits)

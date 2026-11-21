@@ -202,27 +202,28 @@ namespace Deadzone.Player
             if (AudioManager.Instance != null) AudioManager.Instance.PlayShoot(0.35f);
         }
 
+        private GUIStyle nameStyle;
+
         private void OnGUI()
         {
             GUI.matrix = Matrix4x4.identity; // raw screen pixels (world-anchored / safe-area aware)
             if (isDead || !mainCam) return;
 
-            Vector3 headPos = transform.position + Vector3.up * (isDowned ? 1.0f : 1.8f);
-            Vector3 screenPos = mainCam.WorldToScreenPoint(headPos);
-            if (screenPos.z <= 0) return;
-
-            float y = Screen.height - screenPos.y;
-            float x = screenPos.x;
-
-            GUI.color = isDowned ? new Color(1f, 0.7f, 0.2f) : new Color(0.2f, 0.9f, 1.0f);
-            string label = isDowned ? $"[DUO DOWN] {callsign} (HOLD E)" : $"[DUO] {callsign}";
-            GUI.Label(new Rect(x - 70, y - 24, 140, 20), label);
-
-            // Mini Health bar
+            // Same green overhead bar as the player (Deadzone.UI.BarDrawer); bleed-out timer in amber when downed.
+            Vector3 headPos = transform.position + Vector3.up * (isDowned ? 0.6f : 1.35f);
             float hpPct = isDowned ? Mathf.Clamp01(bleedoutTimer / 20f) : Mathf.Clamp01(health.CurrentHealth / health.MaxHealth);
-            GUI.Box(new Rect(x - 30, y - 4, 60, 6), "");
-            GUI.color = isDowned ? Color.yellow : (hpPct > 0.35f ? new Color(0.2f, 0.9f, 0.3f) : new Color(0.95f, 0.2f, 0.2f));
-            GUI.Box(new Rect(x - 30, y - 4, 60 * hpPct, 6), "");
+            Color fill = isDowned ? new Color(1f, 0.72f, 0.2f) : Deadzone.UI.BarDrawer.Green;
+            if (!Deadzone.UI.BarDrawer.DrawOverhead(mainCam, headPos, hpPct, fill, out var tl)) return;
+
+            float k = Mathf.Max(1f, Mathf.Min(Screen.width, Screen.height) / 720f);
+            if (nameStyle == null) nameStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.LowerCenter, fontStyle = FontStyle.Bold };
+            nameStyle.fontSize = Mathf.RoundToInt(11 * k);
+            string label = isDowned ? $"{callsign} DOWN - HOLD E" : callsign;
+            float lw = 200f * k, lh = 18f * k, cx = tl.x + 27f * k;
+            GUI.color = new Color(0f, 0f, 0f, 0.8f);
+            GUI.Label(new Rect(cx - lw * 0.5f + 1, tl.y - lh - 1 + 1, lw, lh), label, nameStyle);
+            GUI.color = isDowned ? new Color(1f, 0.75f, 0.3f) : new Color(0.55f, 0.92f, 1f);
+            GUI.Label(new Rect(cx - lw * 0.5f, tl.y - lh - 1, lw, lh), label, nameStyle);
             GUI.color = Color.white;
         }
     }

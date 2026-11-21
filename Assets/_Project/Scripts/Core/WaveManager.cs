@@ -144,7 +144,8 @@ namespace Deadzone.Core
         {
             isIntermission = true;
             intermissionTimer = 3.5f;
-            while (intermissionTimer > 0f) { intermissionTimer -= Time.deltaTime; yield return null; }
+            // Upgrade popup (UI.UpgradeDraft) opens on OnWaveCompleted; the next round waits until it closes.
+            while (intermissionTimer > 0f || Deadzone.UI.UpgradeDraft.IsOpenNow) { intermissionTimer = Mathf.Max(0f, intermissionTimer - Time.deltaTime); yield return null; }
             isIntermission = false;
 
             WaveConfig wave = GetConfigForCurrentWave();

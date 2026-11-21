@@ -36,16 +36,16 @@ namespace Deadzone.UI
             {
                 style = new GUIStyle(GUI.skin.label)
                 {
-                    alignment = TextAnchor.LowerCenter,
+                    alignment = TextAnchor.UpperCenter,
                     fontSize = Mathf.Max(12, Screen.height / 55),
                     fontStyle = FontStyle.Bold,
                 };
                 style.normal.textColor = Palette.WithAlpha(Palette.UIText, 0.55f);
             }
             Rect safe = Screen.safeArea;
-            // IMGUI's origin is top-left; safeArea's is bottom-left.
-            float bottom = Screen.height - safe.yMin - 6f;
-            GUI.Label(new Rect(safe.xMin, bottom - 40f, safe.width, 40f), text, style);
+            // Top centre (the bottom centre is the loadout bar). IMGUI's origin is top-left; safeArea's is bottom-left.
+            float top = Screen.height - safe.yMax + 2f;
+            GUI.Label(new Rect(safe.xMin, top, safe.width, 40f), text, style);
         }
     }
 }

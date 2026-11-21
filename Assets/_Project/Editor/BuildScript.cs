@@ -107,12 +107,14 @@ namespace Deadzone.Editor
 
             EditorUserBuildSettings.buildAppBundle = false;
 
-            // Founder (Build #8): the game is played with the phone upright. Lock portrait.
-            PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
-            PlayerSettings.allowedAutorotateToPortrait = true;
+            // Founder (Build #9): landscape (Build #8 tried portrait; reverted). The autorotate flags did not
+            // reach the manifest ("fullUser" = portrait allowed), so the APK starts fixed landscape and
+            // GameManager then allows both landscape sides at runtime (never portrait).
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
+            PlayerSettings.allowedAutorotateToPortrait = false;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
-            PlayerSettings.allowedAutorotateToLandscapeLeft = false;
-            PlayerSettings.allowedAutorotateToLandscapeRight = false;
+            PlayerSettings.allowedAutorotateToLandscapeLeft = true;
+            PlayerSettings.allowedAutorotateToLandscapeRight = true;
 
             BuildPlayerOptions options = new BuildPlayerOptions
             {

@@ -45,7 +45,7 @@ namespace Deadzone.Core
             Application.logMessageReceived += OnLog;
             if (int.TryParse(System.Environment.GetEnvironmentVariable("DZ_PLAYSIM_WAVES"), out int w)) targetWave = w;
             Time.timeScale = SimTimeScale;
-            Deadzone.Camera.TopDownCamera.ForcePortrait = true; // the game ships portrait (Build #8+)
+            Deadzone.Camera.TopDownCamera.ForcePortrait = false; // the game ships landscape (Build #9+)
             simStart = Time.time;
             Log($"PlaySim started. timeScale={SimTimeScale} targetWave={targetWave}");
         }
@@ -71,7 +71,7 @@ namespace Deadzone.Core
             if (wm != null)
             {
                 wm.OnWaveStarted += (n, t) => { lastWaveSeen = n; lastProgressTime = Time.time; stallDumped = false; Log($"[t={T():0}] WAVE {n} START: {t}"); };
-                wm.OnWaveCompleted += n => { wavesCompleted = n; lastProgressTime = Time.time; Log($"[t={T():0}] WAVE {n} COMPLETE"); };
+                wm.OnWaveCompleted += n => { wavesCompleted = n; lastProgressTime = Time.time; Log($"[t={T():0}] WAVE {n} COMPLETE  gold={(GameManager.Instance != null ? GameManager.Instance.CreditsEarned : 0)}  upgradeRound={Deadzone.UI.UpgradeDraft.IsUpgradeRound(n)}"); };
             }
             else Log("!! No WaveManager in scene");
         }
@@ -92,6 +92,7 @@ namespace Deadzone.Core
             if (shotIndex < shotTimes.Length && T() > shotTimes[shotIndex]) { StartCoroutine(Shoot($"play_{shotIndex}")); shotIndex++; }
 
             foreach (var an in FindObjectsByType<Animator>(FindObjectsInactive.Exclude)) an.cullingMode = AnimatorCullingMode.AlwaysAnimate; // headless: nothing is 'visible'
+            HandleUpgradePopup();
             if (!mechanicsRunning) AutoPlay();
             Watchdog();
 
@@ -164,6 +165,27 @@ namespace Deadzone.Core
 
         private int shotsFired;
 
+        // ---- Upgrade popup (Build #9): pick like a player when it opens naturally; strict check in MechanicsTest ----
+        private float draftSeenAt = -1f;
+        private int naturalDrafts, naturalBuys;
+        private void HandleUpgradePopup()
+        {
+            var d = Deadzone.UI.UpgradeDraft.Instance;
+            if (d == null || mechanicsRunning) return;
+            if (!d.IsOpen) { draftSeenAt = -1f; return; }
+            if (draftSeenAt < 0f)
+            {
+                draftSeenAt = Time.time; naturalDrafts++;
+                Log($"[t={T():0}] UPGRADE POPUP round {d.LastRound}: " + string.Join(", ", d.Offers.Select(o => $"{o.title} Lv{o.level} {o.cost}g")));
+            }
+            else if (Time.time - draftSeenAt > 1.5f)
+            {
+                int before = GameManager.Instance.CreditsEarned;
+                if (d.Choose(0)) naturalBuys++;
+                Log($"[t={T():0}]   bought -> {d.LastResult}; gold {before} -> {GameManager.Instance.CreditsEarned}");
+            }
+        }
+
         // ---- Founder mechanics (Build #8): manual weapon pickup, sniper hold-to-aim / release-to-fire ----
         private bool mechanicsStarted, mechanicsRunning, mechanicsOk;
         private string mechanicsResult = "not run";
@@ -229,6 +251,31 @@ namespace Deadzone.Core
                     yield return null; yield return null;
                     bool lineOff = line == null || !line.IsVisible;
                     notes.Add($"release: shots={fired} lineOff={lineOff} stillAiming={pc.IsPrecisionAiming}"); ok &= fired == 1 && lineOff;
+                }
+                // 5) Upgrade popup: with enough gold it offers 3 affordable picks; buying charges exactly the price.
+                var draft = Deadzone.UI.UpgradeDraft.Instance;
+                if (draft == null) { notes.Add("draft: missing"); ok = false; }
+                else
+                {
+                    int goldBefore = GameManager.Instance.CreditsEarned;
+                    GameManager.Instance.AddCredits(600);
+                    draft.DebugOpen(4);
+                    int g0 = GameManager.Instance.CreditsEarned;
+                    int offered = draft.Offers.Count;
+                    bool allAffordable = draft.Offers.All(o => o.cost <= g0);
+                    bool menuBlocks = Deadzone.UI.HUDController.IsMenuOpen || draft.IsOpen;
+                    int price = offered > 0 ? draft.Offers[0].cost : 0;
+                    bool bought = draft.Choose(0);
+                    int g1 = GameManager.Instance.CreditsEarned;
+                    bool closed = !draft.IsOpen;
+                    notes.Add($"draft: offers={offered} affordable={allAffordable} open={menuBlocks} bought={bought} charged={g0 - g1}/{price} closed={closed}");
+                    ok &= offered == 3 && allAffordable && bought && g0 - g1 == price && closed;
+                    // broke player: no popup
+                    GameManager.Instance.SpendCredits(GameManager.Instance.CreditsEarned);
+                    draft.DebugOpen(5);
+                    notes.Add($"broke: open={draft.IsOpen} ({draft.LastResult})"); ok &= !draft.IsOpen;
+                    if (draft.IsOpen) draft.Skip();
+                    GameManager.Instance.AddCredits(goldBefore); // leave the run's economy as it was
                 }
                 // Restore the original loadout so the rest of the run is comparable.
                 if (before0 != null) pc.SelectSlot(0);
@@ -380,7 +427,7 @@ namespace Deadzone.Core
             yield return null; // (WaitForEndOfFrame never resumes in batchmode)
             if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null) yield break;
             var main = UnityEngine.Camera.main;
-            if (main != null) Render(main, $"{name}_gamecam", 720, 1280); // portrait, like the phone
+            if (main != null) Render(main, $"{name}_gamecam");
             var cam = new GameObject("SimCloseCam").AddComponent<UnityEngine.Camera>();
             cam.CopyFrom(main);
             Vector3 p = pc.transform.position;
@@ -429,7 +476,8 @@ namespace Deadzone.Core
             Log("==== PLAYSIM SUMMARY ====");
             Log($"Waves completed: {wavesCompleted}/{targetWave}  (last started: {lastWaveSeen})  sim time {T():0}s");
             Log($"Revive: {reviveResult}");
-            Log($"Mechanics (pickup + sniper): {mechanicsResult}");
+            Log($"Mechanics (pickup + sniper + upgrade popup): {mechanicsResult}");
+            Log($"Natural upgrade popups: {naturalDrafts} opened, {naturalBuys} bought");
             Log($"Shots fired by sim player: {shotsFired}");
             Log($"Max enemies outside arena at once: {maxOutside}");
             Log($"Worst SUSTAINED (3 samples) humanoid body-vs-root facing while moving: {worstFacing:0}° (raw single-frame worst {rawWorstFacing:0}°; strafe twist ≤ 65° is expected) by type: " + string.Join(", ", facingByType.Select(kv => $"{kv.Key} {kv.Value:0}°")));

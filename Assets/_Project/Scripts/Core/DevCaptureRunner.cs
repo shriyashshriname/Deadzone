@@ -58,6 +58,17 @@ namespace Deadzone.Core
             input.Next.fire = false;
             yield return new WaitForSeconds(1.0f);
             Shot("4_after_shot");
+
+            var draft = Deadzone.UI.UpgradeDraft.Instance;
+            if (draft != null && GameManager.Instance != null)
+            {
+                GameManager.Instance.AddCredits(600);
+                draft.DebugOpen(4);
+                yield return new WaitForSeconds(1.0f);
+                Shot("5_upgrade_popup");
+                yield return null; yield return null; // the capture happens at END of frame: don't close it first
+                draft.Skip();
+            }
             yield return new WaitForSeconds(0.5f);
             Application.Quit();
         }

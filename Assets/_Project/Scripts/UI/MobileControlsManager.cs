@@ -87,7 +87,8 @@ namespace Deadzone.UI
             swapCenter = new Vector2(w - h * 0.20f, h * 0.42f);
             grenadeCenter = new Vector2(w - h * 0.33f, h * 0.42f);
             turretCenter = new Vector2(w - h * 0.45f, h * 0.50f);
-            contextCenter = new Vector2(w - h * 0.25f, h * 0.24f);
+            // Above the move stick (left thumb). Top-right overlapped the weapon/ammo panel.
+            contextCenter = new Vector2(h * 0.22f, h * 0.47f);
         }
 
         /// <summary>

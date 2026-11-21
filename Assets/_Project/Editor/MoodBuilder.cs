@@ -28,7 +28,7 @@ namespace Deadzone.Editor
 
         // Gameplay camera: a bit lower and closer than before so building/prop faces read like the refs.
         public const float CameraPitch = 52f;
-        public const float CameraDistance = 16.5f;
+        public const float CameraDistance = 14f; // Build #9: closer so the hero reads bigger in landscape
 
         [MenuItem("Deadzone/Art/Apply Night Rain Mood")]
         public static void Apply()
