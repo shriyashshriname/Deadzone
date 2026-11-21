@@ -23,3 +23,10 @@ Plan and decisions: `Docs/ROADMAP_NEXT.md` (milestones M1→M5), `Docs/DECISION_
 - Humanoid characters: ModelYaw 0 (retargeting orients them); UAL2 clips need `rotationOffset = 180`.
 - Unity fake-null: never use `??` on components or `GetBoneTransform`.
 - Builders are idempotent; rerun order after big changes: Environment → AI → CharacterArt → Weapon → Creature.
+  EnvironmentBuilder ends by calling `MoodBuilder` (night-rain look); `MoodBuilder.Apply` can also run alone.
+- Look target = founder's reference images in `Assets/_Project/Art/image refernce/` (git-ignored, third-party).
+  Runtime mood (fog, ambient, moon, grading, rain, lightning, player fill light) lives in `Core/AtmosphereController`
+  + `Core/WeatherRain`, NOT in the scene — GameManager spawns it and it overrides scene RenderSettings.
+- Renderer must keep `postProcessData` assigned (it was null = no post at all until Build #7) and Forward+
+  (the floor is one 120 m mesh; plain Forward's per-object light limit hid most lamp pools).
+- PlaySim facing check uses the 3-sample sustained angle; raw single-frame spikes to ~180° are normal turns.

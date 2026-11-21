@@ -41,3 +41,7 @@ Captures/
 
 # Large raw CC0 packs (kept locally; processed assets live under Assets/)
 Art_Source/CC0/quaternius_*/
+
+# Founder look references (third-party screenshots; local only, never commit)
+Assets/_Project/Art/image refernce/
+Assets/_Project/Art/image refernce.meta

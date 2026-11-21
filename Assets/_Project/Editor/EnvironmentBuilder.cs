@@ -26,7 +26,7 @@ namespace Deadzone.Editor
         const int Seed = 20261120;
 
         // Same hexes as scripts/blender_env_kit.py PAL
-        static readonly Dictionary<string, string> Pal = new Dictionary<string, string>
+        internal static readonly Dictionary<string, string> Pal =new Dictionary<string, string>
         {
             {"Concrete","6B6E6A"},{"ConcreteDark","4A4D4A"},{"Rust","7A4A2E"},{"Metal","55595A"},
             {"MetalDark","2F3336"},{"Wood","5C4632"},{"WoodDark","3E3024"},{"Grass","6F8240"},
@@ -269,6 +269,32 @@ namespace Deadzone.Editor
                 }
             }
 
+            // 1b) Street lamps (no RNG, so the rest of the seeded layout is unchanged): warm pools along
+            // the inner walls like a lit street, plus a ring around the helipad so extraction reads at night.
+            var lampSpots = new List<Vector3>();
+            foreach (float t in new[] { -36f, 0f, 36f })
+            {
+                lampSpots.Add(new Vector3(t, 0f, 55.5f)); lampSpots.Add(new Vector3(t, 0f, -55.5f));
+                lampSpots.Add(new Vector3(55.5f, 0f, t)); lampSpots.Add(new Vector3(-55.5f, 0f, t));
+            }
+            foreach (float a in new[] { 45f, 135f, 225f, 315f })
+                lampSpots.Add(Quaternion.Euler(0f, a, 0f) * new Vector3(0f, 0f, 11.5f));
+            foreach (var p in lampSpots)
+            {
+                Vector3 q = p;
+                bool ok = Free(q, 0.8f);
+                for (int k = 1; k <= 4 && !ok; k++) // slide along the wall / ring a little if blocked
+                {
+                    Vector3 along = Mathf.Abs(p.x) > 50f ? Vector3.forward : Mathf.Abs(p.z) > 50f ? Vector3.right : Vector3.Cross(Vector3.up, p.normalized);
+                    q = p + along * (k % 2 == 0 ? 1.5f * k : -1.5f * k);
+                    ok = Free(q, 0.8f);
+                }
+                if (!ok) continue;
+                float yaw = Quaternion.LookRotation(-new Vector3(q.x, 0f, q.z).normalized).eulerAngles.y;
+                var go = Place(pf, "Lamp_Bent", q, yaw, props);
+                AddLampLight(go, lights); lamps++;
+            }
+
             // 2) Perimeter dressing: fence lines, poles, weeds, rubble along the inner wall faces
             string[] edge = { "Fence_Chainlink", "Fence_Broken", "Weeds_Tall", "Rubble_Pile", "Grass_B", "Pole_Leaning", "Dirt_Patch_B", "Weeds_Tall" };
             for (int side = 0; side < 4; side++)
@@ -322,6 +348,7 @@ namespace Deadzone.Editor
             ApplyAtmosphere();
             SetupHelipad(pf, root);
             FixSquadmateHeight();
+            MoodBuilder.ApplyInOpenScene();
             BakeAndSaveNavMesh();
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -334,7 +361,7 @@ namespace Deadzone.Editor
         {
             var b = lamp.GetComponentInChildren<Renderer>().bounds;
             Vector3 basePos = lamp.transform.position;
-            Vector3 head = new Vector3(basePos.x + (b.center.x - basePos.x) * 1.7f, b.max.y - 0.35f, basePos.z + (b.center.z - basePos.z) * 1.7f);
+            Vector3 head = new Vector3(basePos.x + (b.center.x - basePos.x) * 1.7f, b.max.y - 0.95f, basePos.z + (b.center.z - basePos.z) * 1.7f);
             var l = new GameObject("LampLight").AddComponent<Light>();
             l.transform.SetParent(parent);
             l.transform.position = head;
@@ -348,18 +375,19 @@ namespace Deadzone.Editor
         static void ApplyAtmosphere()
         {
             RenderSettings.fog = true;
+            // Edit-time preview of the night-rain mood; at runtime Core/AtmosphereController owns these.
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = Palette.Fog;
-            RenderSettings.fogStartDistance = 24f;
-            RenderSettings.fogEndDistance = 70f;
+            RenderSettings.fogColor = new Color(0.055f, 0.075f, 0.11f);
+            RenderSettings.fogStartDistance = 20f;
+            RenderSettings.fogEndDistance = 58f;
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.30f, 0.33f, 0.40f); // dusk: readable on phones
+            RenderSettings.ambientLight = new Color(0.13f, 0.16f, 0.23f);
             var sun = RenderSettings.sun != null ? RenderSettings.sun : Object.FindAnyObjectByType<Light>();
             if (sun != null && sun.type == LightType.Directional)
             {
-                sun.color = Color.Lerp(Palette.MoonKey, Color.white, 0.35f);
-                sun.intensity = 1.05f;
-                sun.shadows = LightShadows.Soft;
+                sun.color = new Color(0.62f, 0.72f, 0.95f);
+                sun.intensity = 0.55f;
+                sun.shadows = LightShadows.Hard;
             }
             Recolor("Mat_Wall", new Color(0.36f, 0.37f, 0.35f));          // weathered concrete
             Recolor("Mat_Cargo_Blue", new Color(0.24f, 0.32f, 0.36f));    // faded teal container
@@ -376,7 +404,7 @@ namespace Deadzone.Editor
             if (Object.FindAnyObjectByType<UnityEngine.Camera>() is UnityEngine.Camera cam)
             {
                 cam.clearFlags = CameraClearFlags.SolidColor;
-                cam.backgroundColor = Palette.Fog;
+                cam.backgroundColor = RenderSettings.fogColor;
             }
         }
 

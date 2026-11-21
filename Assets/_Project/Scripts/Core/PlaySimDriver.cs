@@ -187,7 +187,15 @@ namespace Deadzone.Core
                 var toes = an.GetBoneTransform(HumanBodyBones.LeftToes) ?? an.GetBoneTransform(HumanBodyBones.LeftFoot);
                 Vector3 bodyFwd = an.bodyRotation * Vector3.forward; bodyFwd.y = 0f;
                 Vector3 rootFwd = d.transform.parent.forward; rootFwd.y = 0f;
-                float ang = Vector3.Angle(bodyFwd, rootFwd);
+                float raw = Vector3.Angle(bodyFwd, rootFwd);
+                rawWorstFacing = Mathf.Max(rawWorstFacing, raw);
+                // Judge SUSTAINED twist only: the smallest angle over this character's last 3 samples.
+                // A one-frame snap (sharp turn, aim flip) used to fail the whole run at random.
+                if (!facingHistory.TryGetValue(d, out var hist)) facingHistory[d] = hist = new Queue<float>();
+                hist.Enqueue(raw);
+                if (hist.Count > 3) hist.Dequeue();
+                if (hist.Count < 3) continue;
+                float ang = hist.Min();
                 string who = d.transform.parent.name.Replace("(Clone)", "");
                 if (!facingByType.ContainsKey(who) || ang > facingByType[who]) facingByType[who] = ang;
                 worstFacing = Mathf.Max(worstFacing, ang);
@@ -208,7 +216,8 @@ namespace Deadzone.Core
         }
 
         private int maxOutside;
-        private float worstFacing;
+        private float worstFacing, rawWorstFacing;
+        private readonly Dictionary<CharacterAnimDriver, Queue<float>> facingHistory = new Dictionary<CharacterAnimDriver, Queue<float>>();
         private readonly Dictionary<string, float> facingByType = new Dictionary<string, float>();
         private float handGap;
         private readonly List<float> handGaps = new List<float>();
@@ -340,7 +349,7 @@ namespace Deadzone.Core
             Log($"Revive: {reviveResult}");
             Log($"Shots fired by sim player: {shotsFired}");
             Log($"Max enemies outside arena at once: {maxOutside}");
-            Log($"Worst humanoid body-vs-root facing while moving: {worstFacing:0}° (strafe twist ≤ 65° is expected) by type: " + string.Join(", ", facingByType.Select(kv => $"{kv.Key} {kv.Value:0}°")));
+            Log($"Worst SUSTAINED (3 samples) humanoid body-vs-root facing while moving: {worstFacing:0}° (raw single-frame worst {rawWorstFacing:0}°; strafe twist ≤ 65° is expected) by type: " + string.Join(", ", facingByType.Select(kv => $"{kv.Key} {kv.Value:0}°")));
             Log($"Right hand median distance from gun grip (while aiming): {handGap:0.00} m  (AimIK {ikInfo})");
             Log("Enemy feet vs floor (worst per type, metres; +above/-below): " + string.Join(", ", bodyDev.Select(kv => $"{kv.Key} {kv.Value:+0.00;-0.00}")));
             Log($"Errors/exceptions: {errors.Count}");
