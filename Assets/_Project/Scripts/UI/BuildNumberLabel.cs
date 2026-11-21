@@ -31,6 +31,7 @@ namespace Deadzone.UI
 
         private void OnGUI()
         {
+            GUI.matrix = Matrix4x4.identity; // raw screen pixels (world-anchored / safe-area aware)
             if (style == null)
             {
                 style = new GUIStyle(GUI.skin.label)

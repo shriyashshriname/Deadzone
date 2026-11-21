@@ -35,6 +35,13 @@ namespace Deadzone.Player
         public int ActiveSlotIndex => activeSlotIndex;
         public int CarriedWeaponCount => (carriedSlots[0] != null ? 1 : 0) + (carriedSlots[1] != null ? 1 : 0);
 
+        /// <summary>True while a precision weapon (sniper) is held at aim: the aim line shows, release fires.</summary>
+        public bool IsPrecisionAiming { get; private set; }
+        /// <summary>Direction the precision shot will travel (the aim line follows this).</summary>
+        public Vector3 PrecisionAimDir { get; private set; } = Vector3.forward;
+        public Weapon EquippedWeapon => equippedWeapon;
+        public static bool IsPrecision(WeaponData d) => d != null && d.weaponType == WeaponType.SniperRifle;
+
         private void Awake()
         {
             if (Instance == null) Instance = this;
@@ -45,6 +52,7 @@ namespace Deadzone.Player
             if (GetComponent<Backpack>() == null) gameObject.AddComponent<Backpack>();
             playerDash = GetComponent<PlayerDash>();
             playerAbilities = GetComponent<PlayerAbilities>();
+            if (GetComponent<PrecisionAimLine>() == null) gameObject.AddComponent<PrecisionAimLine>();
 
             TeamMember tm = GetComponent<TeamMember>();
             if (tm != null) tm.TeamId = 1;
@@ -72,6 +80,7 @@ namespace Deadzone.Player
         }
 
         public void SetInputProvider(IInputProvider provider) => inputProvider = provider;
+        public IInputProvider InputProvider => inputProvider;
 
         private void InitializeHybridLoadout()
         {
@@ -89,14 +98,27 @@ namespace Deadzone.Player
             }
         }
 
-        private void Start() => health.OnDeath += HandleDeath;
+        private void Start()
+        {
+            health.OnDeath += HandleDeath;
+            // The gun object can appear after Awake (built by the visual/weapon setup). Without this the starter
+            // slot stayed empty and the first pickup filled the ALREADY-active slot 0 without equipping it.
+            if (carriedSlots[0] == null)
+            {
+                if (!equippedWeapon) equippedWeapon = GetComponentInChildren<Weapon>(true);
+                if (starterWeaponData == null && equippedWeapon != null) starterWeaponData = equippedWeapon.Data;
+                carriedSlots[0] = starterWeaponData;
+            }
+        }
         private void OnDestroy() { if (health != null) health.OnDeath -= HandleDeath; }
 
         private void Update()
         {
-            if (health != null && health.IsDead) return;
-            if (PlayerRevive.Instance != null && PlayerRevive.Instance.IsDowned) return;
-            if (Deadzone.UI.HUDController.IsMenuOpen) return;
+            // Can't act (dead / downed / menu): drop a held sniper aim WITHOUT firing, so the line hides and
+            // the player doesn't fire an unintended shot the moment they're revived or close the menu.
+            if (health != null && health.IsDead) { IsPrecisionAiming = false; return; }
+            if (PlayerRevive.Instance != null && PlayerRevive.Instance.IsDowned) { IsPrecisionAiming = false; return; }
+            if (Deadzone.UI.HUDController.IsMenuOpen) { IsPrecisionAiming = false; return; }
 
             if (transform.position.y < -3.0f)
             {
@@ -109,6 +131,8 @@ namespace Deadzone.Player
 
             HandleMovement(cmd.moveVector);
             HandleAiming(cmd.aimVector);
+            if (cmd.aimVector.sqrMagnitude > 0.01f) PrecisionAimDir = cmd.aimVector.normalized;
+            else if (!IsPrecisionAiming) PrecisionAimDir = transform.forward;
             HandleActions(cmd);
         }
 
@@ -139,8 +163,23 @@ namespace Deadzone.Player
         {
             if (!equippedWeapon) equippedWeapon = GetComponentInChildren<Weapon>();
 
-            // Primary fire & reload
-            if (cmd.fire && equippedWeapon != null) equippedWeapon.TryFire();
+            // Primary fire. Precision weapons (sniper): HOLD = aim line, RELEASE = one shot along the line.
+            if (equippedWeapon != null && IsPrecision(equippedWeapon.Data))
+            {
+                if (cmd.fire) IsPrecisionAiming = true;
+                else if (IsPrecisionAiming)
+                {
+                    IsPrecisionAiming = false;
+                    transform.rotation = Quaternion.LookRotation(PrecisionAimDir); // shot goes exactly where the line was
+                    equippedWeapon.TryFire();
+                }
+            }
+            else
+            {
+                IsPrecisionAiming = false;
+                if (cmd.fire && equippedWeapon != null) equippedWeapon.TryFire();
+            }
+            if (cmd.pickup) TryPickupNearbyWeapon();
             if (cmd.reload && equippedWeapon != null) equippedWeapon.StartReload();
 
             // Abilities
@@ -154,6 +193,15 @@ namespace Deadzone.Player
             else if (cmd.selectSlot == 1) SelectSlot(1);
         }
 
+        /// <summary>Manual pickup (PICK UP button / E): takes the closest gun on the ground in reach.</summary>
+        public bool TryPickupNearbyWeapon()
+        {
+            var p = WeaponPickup.NearestReady(transform.position);
+            if (p == null) return false;
+            p.GiveTo(this);
+            return true;
+        }
+
         public void PickupWeapon(WeaponData newWeapon)
         {
             if (newWeapon == null) return;
@@ -162,13 +210,13 @@ namespace Deadzone.Player
             {
                 // Empty primary slot
                 carriedSlots[0] = newWeapon;
-                SelectSlot(0);
+                EquipSlot(0);
             }
             else if (carriedSlots[1] == null)
             {
                 // Fill empty secondary slot & switch to it
                 carriedSlots[1] = newWeapon;
-                SelectSlot(1);
+                EquipSlot(1);
             }
             else
             {
@@ -176,6 +224,14 @@ namespace Deadzone.Player
                 carriedSlots[activeSlotIndex] = newWeapon;
                 if (equippedWeapon != null) equippedWeapon.SetWeaponData(newWeapon);
             }
+        }
+
+        /// <summary>Makes slot the active one and always puts its gun in the hands (even if it was already active).</summary>
+        private void EquipSlot(int slot)
+        {
+            activeSlotIndex = slot;
+            if (!equippedWeapon) equippedWeapon = GetComponentInChildren<Weapon>(true);
+            if (equippedWeapon != null && carriedSlots[slot] != null) equippedWeapon.SetWeaponData(carriedSlots[slot]);
         }
 
         public void SwitchCarriedWeapon()

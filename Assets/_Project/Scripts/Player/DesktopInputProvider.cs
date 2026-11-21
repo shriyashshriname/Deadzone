@@ -51,6 +51,7 @@ namespace Deadzone.Player
             cmd.grenade = Input.GetKeyDown(KeyCode.G);
             cmd.turret = Input.GetKeyDown(KeyCode.T);
             cmd.interact = Input.GetKey(KeyCode.E);
+            cmd.pickup = Input.GetKeyDown(KeyCode.E);
             cmd.reload = Input.GetKeyDown(KeyCode.R);
 
             // Weapon switching

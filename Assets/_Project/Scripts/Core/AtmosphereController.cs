@@ -17,8 +17,8 @@ namespace Deadzone.Core
         [Header("Fog (linear, swallows the far edge of the screen)")]
         [SerializeField] private bool enableFog = true;
         [SerializeField] private Color fogColor = new Color(0.055f, 0.075f, 0.11f);
-        [SerializeField] private float fogStart = 20f;
-        [SerializeField] private float fogEnd = 58f;
+        [SerializeField] private float fogStart = 26f;
+        [SerializeField] private float fogEnd = 68f;
 
         [Header("Night lighting")]
         [SerializeField] private Color ambientSky = new Color(0.26f, 0.30f, 0.40f);

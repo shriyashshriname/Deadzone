@@ -11,6 +11,7 @@ namespace Deadzone.Core
         public bool grenade;          // Throw tactical grenade
         public bool turret;           // Deploy sentry turret
         public bool interact;         // Hold interaction (revive, airdrop, substation, extraction)
+        public bool pickup;           // Pick up the weapon on the ground nearby (one-shot)
         public bool reload;           // Reload triggered
         public bool switchWeapon;     // Toggle carried weapon slot
         public int selectSlot;        // Direct slot selection: 0 = primary, 1 = secondary, -1 = no direct selection

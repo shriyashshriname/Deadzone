@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using UnityEngine;
 using Deadzone.Player;
+using Deadzone.Core;
 
 namespace Deadzone.Core
 {
@@ -44,6 +45,7 @@ namespace Deadzone.Core
             Application.logMessageReceived += OnLog;
             if (int.TryParse(System.Environment.GetEnvironmentVariable("DZ_PLAYSIM_WAVES"), out int w)) targetWave = w;
             Time.timeScale = SimTimeScale;
+            Deadzone.Camera.TopDownCamera.ForcePortrait = true; // the game ships portrait (Build #8+)
             simStart = Time.time;
             Log($"PlaySim started. timeScale={SimTimeScale} targetWave={targetWave}");
         }
@@ -82,12 +84,15 @@ namespace Deadzone.Core
 
             // Keep the player alive (except during the revive test).
             if (reviveDone && !playerHp.IsDead && playerHp.CurrentHealth < playerHp.MaxHealth * 0.5f) playerHp.Heal(playerHp.MaxHealth);
+            // The input-mechanics test checks controls, not survival: keep the player standing while it runs.
+            if (mechanicsRunning && !playerHp.IsDead) playerHp.Heal(playerHp.MaxHealth);
 
             if (!reviveDone && T() > 12f) StartCoroutine(ReviveTest());
+            if (reviveDone && !mechanicsStarted && T() > 30f) { mechanicsStarted = true; StartCoroutine(MechanicsTest()); }
             if (shotIndex < shotTimes.Length && T() > shotTimes[shotIndex]) { StartCoroutine(Shoot($"play_{shotIndex}")); shotIndex++; }
 
             foreach (var an in FindObjectsByType<Animator>(FindObjectsInactive.Exclude)) an.cullingMode = AnimatorCullingMode.AlwaysAnimate; // headless: nothing is 'visible'
-            AutoPlay();
+            if (!mechanicsRunning) AutoPlay();
             Watchdog();
 
             if (Time.time >= nextStatus)
@@ -158,6 +163,83 @@ namespace Deadzone.Core
         }
 
         private int shotsFired;
+
+        // ---- Founder mechanics (Build #8): manual weapon pickup, sniper hold-to-aim / release-to-fire ----
+        private bool mechanicsStarted, mechanicsRunning, mechanicsOk;
+        private string mechanicsResult = "not run";
+
+        private class ScriptedInput : IInputProvider
+        {
+            public InputCommand Next;
+            public InputCommand GetCommand() { var c = Next; c.selectSlot = -1; Next.pickup = false; return c; } // -1 = no slot change (0 would force slot 1 every frame)
+        }
+
+        private System.Collections.IEnumerator MechanicsTest()
+        {
+            mechanicsRunning = true;
+            var notes = new List<string>();
+            bool ok = true;
+            var oldInput = pc.InputProvider;
+            var input = new ScriptedInput();
+            pc.SetInputProvider(input);
+            var rail = Resources.LoadAll<Deadzone.Data.WeaponData>("Weapons").FirstOrDefault(w => PlayerController.IsPrecision(w));
+            var before0 = pc.PrimaryWeapon; var before1 = pc.SecondaryWeapon;
+            if (rail == null || pc.PrimaryWeapon == rail || pc.SecondaryWeapon == rail) { notes.Add("setup: no fresh sniper to test"); ok = false; }
+            else
+            {
+                // 1) Standing on a new gun must NOT pick it up.
+                var pickup = Deadzone.Combat.WeaponPickup.Spawn(rail, pc.transform.position);
+                yield return new WaitForSeconds(2.0f);
+                bool auto = pc.PrimaryWeapon == rail || pc.SecondaryWeapon == rail;
+                notes.Add($"no auto-pickup={!auto}"); ok &= !auto;
+                // 2) PICK UP takes it.
+                input.Next.pickup = true;
+                yield return new WaitForSeconds(0.3f);
+                bool got = pc.PrimaryWeapon == rail || pc.SecondaryWeapon == rail;
+                bool equipped = pc.EquippedWeapon != null && pc.EquippedWeapon.Data == rail;
+                notes.Add($"manual pickup={got} equipped={equipped}"); ok &= got && equipped;
+                var allGuns = pc.GetComponentsInChildren<Deadzone.Combat.Weapon>(true);
+                notes.Add($"diag: P={pc.PrimaryWeapon?.weaponName} S={pc.SecondaryWeapon?.weaponName} active={pc.ActiveSlotIndex} hands={(pc.EquippedWeapon != null ? pc.EquippedWeapon.name + ':' + pc.EquippedWeapon.Data?.weaponName + (pc.EquippedWeapon.gameObject.activeInHierarchy ? "" : "(inactive)") : "null")} gunsUnderPlayer={allGuns.Length} [{string.Join(",", allGuns.Select(g => g.name + ':' + g.Data?.weaponName))}]");
+                if (pickup != null) Destroy(pickup.gameObject);
+
+                if (equipped)
+                {
+                    var w = pc.EquippedWeapon;
+                    w.RefillInstant();
+                    yield return new WaitForSeconds(1.2f); // past any fire cooldown
+                    int ammo0 = w.CurrentAmmo;
+                    // 3) HOLD: aim line, no shot.
+                    var enemy = Enemies().OrderBy(e => (e.transform.position - pc.transform.position).sqrMagnitude).FirstOrDefault();
+                    Vector3 dir = enemy != null ? enemy.transform.position - pc.transform.position : pc.transform.forward;
+                    dir.y = 0f; dir.Normalize();
+                    input.Next.fire = true; input.Next.aimVector = dir;
+                    yield return new WaitForSeconds(0.8f);
+                    var line = pc.GetComponent<PrecisionAimLine>();
+                    bool lineOn = line != null && line.IsVisible && line.CurrentLength > 1f;
+                    bool held = w.CurrentAmmo == ammo0 && pc.IsPrecisionAiming;
+                    notes.Add($"hold: aiming={pc.IsPrecisionAiming} noShot={w.CurrentAmmo == ammo0} line={lineOn} len={(line != null ? line.CurrentLength : 0f):0.0}m onEnemy={(line != null && line.OnEnemy)}");
+                    ok &= held && lineOn;
+                    yield return StartCoroutine(Shoot("play_sniper_aim"));
+                    // 4) RELEASE: exactly one shot.
+                    input.Next.fire = false;
+                    yield return new WaitForSeconds(0.3f);
+                    int fired = ammo0 - w.CurrentAmmo;
+                    // A capture frame can be long enough that the wait ends in ONE frame, before the line's LateUpdate:
+                    // give it two frames so we judge the settled state.
+                    yield return null; yield return null;
+                    bool lineOff = line == null || !line.IsVisible;
+                    notes.Add($"release: shots={fired} lineOff={lineOff} stillAiming={pc.IsPrecisionAiming}"); ok &= fired == 1 && lineOff;
+                }
+                // Restore the original loadout so the rest of the run is comparable.
+                if (before0 != null) pc.SelectSlot(0);
+            }
+            input.Next = default;
+            pc.SetInputProvider(oldInput);
+            mechanicsOk = ok;
+            mechanicsResult = (ok ? "PASS " : "FAIL ") + string.Join(" | ", notes);
+            Log($"[t={T():0}] Mechanics: {mechanicsResult}");
+            mechanicsRunning = false;
+        }
 
         private void CheckBodies()
         {
@@ -298,7 +380,7 @@ namespace Deadzone.Core
             yield return null; // (WaitForEndOfFrame never resumes in batchmode)
             if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null) yield break;
             var main = UnityEngine.Camera.main;
-            if (main != null) Render(main, $"{name}_gamecam");
+            if (main != null) Render(main, $"{name}_gamecam", 720, 1280); // portrait, like the phone
             var cam = new GameObject("SimCloseCam").AddComponent<UnityEngine.Camera>();
             cam.CopyFrom(main);
             Vector3 p = pc.transform.position;
@@ -324,9 +406,9 @@ namespace Deadzone.Core
             }
         }
 
-        private void Render(UnityEngine.Camera cam, string name)
+        private void Render(UnityEngine.Camera cam, string name, int width = 1280, int height = 720)
         {
-            var rt = new RenderTexture(1280, 720, 24);
+            var rt = new RenderTexture(width, height, 24);
             var prev = cam.targetTexture;
             cam.targetTexture = rt; cam.Render(); cam.targetTexture = prev;
             RenderTexture.active = rt;
@@ -347,6 +429,7 @@ namespace Deadzone.Core
             Log("==== PLAYSIM SUMMARY ====");
             Log($"Waves completed: {wavesCompleted}/{targetWave}  (last started: {lastWaveSeen})  sim time {T():0}s");
             Log($"Revive: {reviveResult}");
+            Log($"Mechanics (pickup + sniper): {mechanicsResult}");
             Log($"Shots fired by sim player: {shotsFired}");
             Log($"Max enemies outside arena at once: {maxOutside}");
             Log($"Worst SUSTAINED (3 samples) humanoid body-vs-root facing while moving: {worstFacing:0}° (raw single-frame worst {rawWorstFacing:0}°; strafe twist ≤ 65° is expected) by type: " + string.Join(", ", facingByType.Select(kv => $"{kv.Key} {kv.Value:0}°")));
@@ -355,7 +438,7 @@ namespace Deadzone.Core
             Log($"Errors/exceptions: {errors.Count}");
             foreach (var e in errors.Take(25)) Log("   * " + e);
             bool feetOk = worstFacing < 100f; // feet: verified by grounding + captures; pivot metric is informational
-            bool pass = wavesCompleted >= targetWave && reviveOk && errors.Count == 0 && maxOutside == 0 && feetOk && handGap < 0.25f;
+            bool pass = wavesCompleted >= targetWave && reviveOk && mechanicsOk && errors.Count == 0 && maxOutside == 0 && feetOk && handGap < 0.25f;
             Log($"RESULT: {(pass ? "PASS" : "FAIL")}");
             Directory.CreateDirectory("Logs");
             File.WriteAllText("Logs/playsim_report.txt", log.ToString());

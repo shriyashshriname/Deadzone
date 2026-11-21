@@ -9,8 +9,10 @@ namespace Deadzone.Combat
     /// <summary>
     /// A gun lying on the ground (enemy drop or swapped-out weapon). Floats and spins above a
     /// rarity-coloured glow ring with a light beam so it reads from the top-down camera.
-    /// Touching it gives the weapon via PlayerController.PickupWeapon (fills the empty slot first,
-    /// otherwise swaps the held weapon and drops the old one here). Despawns after a while.
+    /// Picking up is MANUAL (founder, Build #8): the player presses PICK UP (mobile) / E (desktop)
+    /// while standing next to it -> PlayerController.PickupWeapon (fills the empty slot first,
+    /// otherwise swaps the held weapon and drops the old one here). Walking over a gun the player
+    /// already carries still tops up its ammo automatically. Despawns after a while.
     /// </summary>
     public class WeaponPickup : MonoBehaviour
     {
@@ -24,7 +26,31 @@ namespace Deadzone.Combat
         private float spawnTime;
         private Light glow;
 
+        /// <summary>How close the player must stand to pick a gun up.</summary>
+        public const float PickupRange = 2.0f;
+        private static readonly System.Collections.Generic.List<WeaponPickup> active = new System.Collections.Generic.List<WeaponPickup>();
+
         public WeaponData Data => data;
+        public bool IsReady => data != null && Time.time - spawnTime >= pickupDelay;
+
+        /// <summary>Closest ready pickup within PickupRange of pos, or null.</summary>
+        public static WeaponPickup NearestReady(Vector3 pos)
+        {
+            WeaponPickup best = null;
+            float bestSqr = PickupRange * PickupRange;
+            for (int i = active.Count - 1; i >= 0; i--)
+            {
+                var p = active[i];
+                if (p == null) { active.RemoveAt(i); continue; }
+                if (!p.IsReady) continue;
+                Vector3 d = p.transform.position - pos; d.y = 0f;
+                if (d.sqrMagnitude <= bestSqr) { bestSqr = d.sqrMagnitude; best = p; }
+            }
+            return best;
+        }
+
+        private void OnEnable() { if (!active.Contains(this)) active.Add(this); spawnTime = Time.time; }
+        private void OnDisable() => active.Remove(this);
 
         /// <summary>Spawns a pickup at pos. Weighted towards common, rarer guns from tougher enemies.</summary>
         public static WeaponPickup Spawn(WeaponData weapon, Vector3 pos)
@@ -67,7 +93,6 @@ namespace Deadzone.Combat
 
         private void Start()
         {
-            spawnTime = Time.time;
             Color rc = WeaponData.RarityColor(data != null ? data.rarity : WeaponRarity.Common);
 
             if (data != null && data.modelPrefab != null)
@@ -117,15 +142,15 @@ namespace Deadzone.Combat
             if (left <= 0f) Destroy(gameObject);
         }
 
-        private void OnTriggerEnter(Collider other) => TryGive(other);
-        private void OnTriggerStay(Collider other) => TryGive(other);
+        private void OnTriggerEnter(Collider other) => TryAmmoTopUp(other);
+        private void OnTriggerStay(Collider other) => TryAmmoTopUp(other);
 
-        private void TryGive(Collider other)
+        /// <summary>Only automatic action: a gun you already carry is absorbed as ammo. New guns need PICK UP.</summary>
+        private void TryAmmoTopUp(Collider other)
         {
-            if (data == null || Time.time - spawnTime < pickupDelay) return;
-            if (!other.CompareTag("Player")) return;
+            if (!IsReady || !other.CompareTag("Player")) return;
             var pc = other.GetComponent<PlayerController>();
-            if (pc == null) return;
+            if (pc == null || (pc.PrimaryWeapon != data && pc.SecondaryWeapon != data)) return;
             GiveTo(pc);
         }
 

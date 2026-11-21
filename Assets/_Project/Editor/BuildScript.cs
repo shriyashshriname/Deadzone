@@ -38,6 +38,20 @@ namespace Deadzone.Editor
             return n;
         }
 
+        /// <summary>Windows build for screenshot checks (DevCaptureRunner). Does NOT bump the build number.</summary>
+        public static void BuildWindowsCapture()
+        {
+            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+            {
+                scenes = Scenes,
+                locationPathName = "Builds/WindowsCapture/Deadzone.exe",
+                target = BuildTarget.StandaloneWindows64,
+                options = BuildOptions.None
+            });
+            Debug.Log($"[BuildScript] Capture build: {report.summary.result}");
+            if (Application.isBatchMode) EditorApplication.Exit(report.summary.result == BuildResult.Succeeded ? 0 : 1);
+        }
+
         [MenuItem("Deadzone/Build/Windows (x64)")]
         public static void BuildWindows()
         {
@@ -92,6 +106,13 @@ namespace Deadzone.Editor
             }
 
             EditorUserBuildSettings.buildAppBundle = false;
+
+            // Founder (Build #8): the game is played with the phone upright. Lock portrait.
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+            PlayerSettings.allowedAutorotateToPortrait = true;
+            PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
+            PlayerSettings.allowedAutorotateToLandscapeLeft = false;
+            PlayerSettings.allowedAutorotateToLandscapeRight = false;
 
             BuildPlayerOptions options = new BuildPlayerOptions
             {

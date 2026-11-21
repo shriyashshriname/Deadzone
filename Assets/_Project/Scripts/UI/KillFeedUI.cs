@@ -65,9 +65,10 @@ namespace Deadzone.UI
         private void OnGUI()
         {
             if (messages.Count == 0) return;
+            UIScale.Begin();
 
-            float startX = Screen.width - 320;
-            float startY = 110;
+            float startX = UIScale.W - 320;
+            float startY = UIScale.Portrait ? 300 : 110;
             float itemHeight = 24;
 
             for (int i = 0; i < messages.Count; i++)

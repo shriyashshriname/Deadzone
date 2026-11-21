@@ -23,6 +23,7 @@ namespace Deadzone.UI
 
         private void OnGUI()
         {
+            GUI.matrix = Matrix4x4.identity; // raw screen pixels (world-anchored / safe-area aware)
             var wm = WaveManager.Instance;
             var cam = UnityEngine.Camera.main;
             if (wm == null || cam == null || wm.IsIntermission) return;

@@ -91,15 +91,16 @@ namespace Deadzone.UI
         private void OnGUI()
         {
             if (!isVisible || string.IsNullOrEmpty(currentMessage)) return;
+            UIScale.Begin();
 
-            int screenW = Screen.width;
-            int screenH = Screen.height;
+            float screenW = UIScale.W;
+            float screenH = UIScale.H;
 
             // Compact centered banner below wave tracker
             float bannerW = Mathf.Min(screenW * 0.85f, 540f);
             float bannerH = 38f;
             float bannerX = (screenW - bannerW) * 0.5f;
-            float bannerY = 56f;
+            float bannerY = UIScale.Portrait ? 256f : 56f;
 
             GUI.color = new Color(0.05f, 0.10f, 0.15f, 0.88f);
             GUI.DrawTexture(new Rect(bannerX, bannerY, bannerW, bannerH), Texture2D.whiteTexture);
@@ -112,7 +113,7 @@ namespace Deadzone.UI
             GUIStyle textStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = Mathf.Clamp(screenH / 45, 12, 15),
+                fontSize = Mathf.Clamp((int)(screenH / 45f), 12, 15),
                 fontStyle = FontStyle.Bold
             };
             textStyle.normal.textColor = Color.white;

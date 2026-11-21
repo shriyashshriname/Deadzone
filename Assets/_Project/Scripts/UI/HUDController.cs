@@ -42,6 +42,7 @@ namespace Deadzone.UI
 
         private void OnGUI()
         {
+            UIScale.Begin();
             if (playerHealth == null || currentWeapon == null || playerAbilities == null) FindPlayerReferences();
             Color oldColor = GUI.color;
             bool isMobile = MobileControlsManager.IsMobileActive;
@@ -56,7 +57,7 @@ namespace Deadzone.UI
                 GUI.color = Color.white;
                 GUI.Label(new Rect(24, 20, 200, 22), $"♥ {Mathf.CeilToInt(playerHealth.CurrentHealth)} / {playerHealth.MaxHealth}");
 
-                string shopText = isShopOpen ? (isMobile ? "CLOSE SHOP" : "CLOSE [B]") : (isMobile ? "UPGRADE SHOP ⚡" : "UPGRADE SHOP [B]");
+                string shopText = isShopOpen ? (isMobile ? "CLOSE SHOP" : "CLOSE [B]") : (isMobile ? "UPGRADE SHOP" : "UPGRADE SHOP [B]");
                 if (GUI.Button(new Rect(16, 48, 130, 26), shopText)) isShopOpen = !isShopOpen;
             }
 
@@ -76,13 +77,13 @@ namespace Deadzone.UI
             // 3. Tactical Abilities (Desktop Only - Mobile buttons handle this)
             if (!isMobile && playerAbilities != null)
             {
-                GUI.Box(new Rect(20, Screen.height - 90, 220, 68), "");
+                GUI.Box(new Rect(20, UIScale.H - 90, 220, 68), "");
                 bool gReady = playerAbilities.IsGrenadeReady;
                 GUI.color = gReady ? new Color(1f, 0.7f, 0.2f) : new Color(0.6f, 0.6f, 0.6f);
-                GUI.Label(new Rect(30, Screen.height - 84, 200, 24), gReady ? "[Q] GRENADE: READY" : $"[Q] GRENADE: {playerAbilities.GrenadeRemainingTime:F1}s");
+                GUI.Label(new Rect(30, UIScale.H - 84, 200, 24), gReady ? "[Q] GRENADE: READY" : $"[Q] GRENADE: {playerAbilities.GrenadeRemainingTime:F1}s");
                 bool tReady = playerAbilities.IsTurretReady;
                 GUI.color = tReady ? new Color(0.2f, 0.9f, 1f) : new Color(0.6f, 0.6f, 0.6f);
-                GUI.Label(new Rect(30, Screen.height - 58, 200, 24), tReady ? "[F] TURRET: READY" : $"[F] TURRET: {playerAbilities.TurretRemainingTime:F1}s");
+                GUI.Label(new Rect(30, UIScale.H - 58, 200, 24), tReady ? "[F] TURRET: READY" : $"[F] TURRET: {playerAbilities.TurretRemainingTime:F1}s");
                 GUI.color = Color.white;
             }
 
@@ -93,22 +94,22 @@ namespace Deadzone.UI
                 string ammoStr = currentWeapon.IsReloading ? "RELOADING..." : $"{currentWeapon.CurrentAmmo} / {currentWeapon.Data.magazineCapacity}";
                 if (!isMobile)
                 {
-                    GUI.Box(new Rect(Screen.width - 240, Screen.height - 85, 220, 65), "");
-                    GUI.Label(new Rect(Screen.width - 230, Screen.height - 80, 200, 25), $"WEAPON: {weaponName}");
-                    GUI.Label(new Rect(Screen.width - 230, Screen.height - 55, 200, 25), $"AMMO: {ammoStr}  [R]");
+                    GUI.Box(new Rect(UIScale.W - 240, UIScale.H - 85, 220, 65), "");
+                    GUI.Label(new Rect(UIScale.W - 230, UIScale.H - 80, 200, 25), $"WEAPON: {weaponName}");
+                    GUI.Label(new Rect(UIScale.W - 230, UIScale.H - 55, 200, 25), $"AMMO: {ammoStr}  [R]");
                 }
                 else
                 {
-                    GUI.Box(new Rect(Screen.width - 240, 72, 185, 38), "");
-                    GUI.Label(new Rect(Screen.width - 232, 74, 175, 18), $"GUN: {weaponName}");
-                    GUI.Label(new Rect(Screen.width - 232, 90, 175, 18), $"AMMO: {ammoStr}");
+                    GUI.Box(new Rect(UIScale.W - 240, 72, 185, 38), "");
+                    GUI.Label(new Rect(UIScale.W - 232, 74, 175, 18), $"GUN: {weaponName}");
+                    GUI.Label(new Rect(UIScale.W - 232, 90, 175, 18), $"AMMO: {ammoStr}");
                 }
             }
 
             // 5. Mobile Pause Button (Top Right)
             if (isMobile)
             {
-                if (GUI.Button(new Rect(Screen.width - 48, 16, 36, 36), "⏸")) TogglePause();
+                if (GUI.Button(new Rect(UIScale.W - 48, 16, 36, 36), "II")) TogglePause();
             }
 
             // 6. Wave, Kills & Credits (Top Right)
@@ -118,9 +119,9 @@ namespace Deadzone.UI
             int hostiles = WaveManager.Instance != null ? WaveManager.Instance.TotalRemainingHostiles : 0;
             bool isIntermission = WaveManager.Instance != null && WaveManager.Instance.IsIntermission;
 
-            float waveX = isMobile ? Screen.width - 240 : Screen.width - 220;
+            float waveX = isMobile ? UIScale.W - 240 : UIScale.W - 220;
             GUI.Box(new Rect(waveX, 16, isMobile ? 185 : 200, 52), "");
-            GUI.Label(new Rect(waveX + 8, 18, 180, 18), $"WAVE {wave}  |  💎 {credits}");
+            GUI.Label(new Rect(waveX + 8, 18, 180, 18), $"WAVE {wave}  |  CR {credits}");
             GUI.color = hostiles > 0 ? new Color(1f, 0.4f, 0.4f) : Color.white;
             GUI.Label(new Rect(waveX + 8, 36, 180, 18), isIntermission ? "CLEARED! REGROUP" : $"KILLS: {kills} | HOSTILES: {hostiles}");
             GUI.color = Color.white;
@@ -135,12 +136,12 @@ namespace Deadzone.UI
             {
                 string s1 = activeSlot == 0 ? $"★ [1] {slot1Name}" : $"[1] {slot1Name}";
                 string s2 = activeSlot == 1 ? $"★ [2] {slot2Name}" : $"[2] {slot2Name}";
-                GUI.Box(new Rect(Screen.width / 2 - 220, Screen.height - 45, 440, 32), "");
-                GUI.Label(new Rect(Screen.width / 2 - 210, Screen.height - 40, 420, 25), $"{s1}   |   {s2}  [Q TO SWAP]");
+                GUI.Box(new Rect(UIScale.W / 2 - 220, UIScale.H - 45, 440, 32), "");
+                GUI.Label(new Rect(UIScale.W / 2 - 210, UIScale.H - 40, 420, 25), $"{s1}   |   {s2}  [Q TO SWAP]");
             }
             else
             {
-                float barW = 280, barH = 34, barX = (Screen.width - barW) * 0.5f, barY = Screen.height - 42;
+                float barW = 280, barH = 34, barX = (UIScale.W - barW) * 0.5f, barY = UIScale.H - (UIScale.Portrait ? 56 : 42);
                 GUI.Box(new Rect(barX, barY, barW, barH), "");
                 GUI.color = activeSlot == 0 ? new Color(0.2f, 1f, 0.5f) : new Color(0.7f, 0.7f, 0.7f);
                 if (GUI.Button(new Rect(barX + 4, barY + 3, (barW - 12) * 0.5f, barH - 6), $"★ S1: {slot1Name}") && pc != null) pc.SelectSlot(0);
@@ -152,17 +153,19 @@ namespace Deadzone.UI
             // 8. Evac / Wave Banner (Top Center)
             if (ExtractionZone.Instance != null && ExtractionZone.Instance.IsActive && !ExtractionZone.Instance.IsExtracted)
             {
-                GUI.Box(new Rect(Screen.width / 2 - 210, 34, 420, 34), "");
+                float by = UIScale.Portrait ? 142 : 34; // portrait: below the top-left/top-right panels
+                GUI.Box(new Rect(UIScale.W / 2 - 210, by, 420, 34), "");
                 GUI.color = ExtractionZone.Instance.IsPlayerInside ? new Color(0.2f, 1f, 0.4f) : new Color(0.2f, 0.9f, 1f);
                 string evacText = ExtractionZone.Instance.IsPlayerInside ? $"EXTRACTING: {ExtractionZone.Instance.CurrentHoldTime:F1}s / {ExtractionZone.Instance.RequiredHoldTime:F1}s (HOLD!)" : "EVAC SHIP AT CENTER! HOLD 5s TO EXTRACT";
-                GUI.Label(new Rect(Screen.width / 2 - 200, 40, 400, 24), evacText);
+                GUI.Label(new Rect(UIScale.W / 2 - 200, by + 6, 400, 24), evacText);
                 GUI.color = Color.white;
             }
             else if (WaveManager.Instance != null && isIntermission)
             {
-                GUI.Box(new Rect(Screen.width / 2 - 180, 34, 360, 36), "");
+                float by = UIScale.Portrait ? 142 : 34;
+                GUI.Box(new Rect(UIScale.W / 2 - 180, by, 360, 36), "");
                 GUI.color = new Color(0.2f, 1f, 0.4f);
-                GUI.Label(new Rect(Screen.width / 2 - 170, 40, 340, 25), $"WAVE CLEARED! NEXT IN: {WaveManager.Instance.IntermissionTimer:F1}s");
+                GUI.Label(new Rect(UIScale.W / 2 - 170, by + 6, 340, 25), $"WAVE CLEARED! NEXT IN: {WaveManager.Instance.IntermissionTimer:F1}s");
                 GUI.color = Color.white;
             }
 
@@ -180,7 +183,7 @@ namespace Deadzone.UI
 
         private void DrawPauseMenu(bool isMobile)
         {
-            float pW = 380, pH = 220, pX = (Screen.width - pW) * 0.5f, pY = (Screen.height - pH) * 0.5f;
+            float pW = 380, pH = 220, pX = (UIScale.W - pW) * 0.5f, pY = (UIScale.H - pH) * 0.5f;
             GUI.Box(new Rect(pX, pY, pW, pH), "");
             GUI.Box(new Rect(pX + 4, pY + 4, pW - 8, pH - 8), "");
             GUI.color = new Color(0.2f, 0.9f, 1f);
@@ -196,7 +199,7 @@ namespace Deadzone.UI
 
         private void DrawUpgradeShop(int credits, bool isMobile)
         {
-            float pW = 460, pH = 334, pX = (Screen.width - pW) * 0.5f, pY = (Screen.height - pH) * 0.5f;
+            float pW = 460, pH = 334, pX = (UIScale.W - pW) * 0.5f, pY = (UIScale.H - pH) * 0.5f;
             GUI.Box(new Rect(pX, pY, pW, pH), "");
             GUI.Box(new Rect(pX + 4, pY + 4, pW - 8, pH - 8), "");
             GUI.color = new Color(0.2f, 0.9f, 1.0f);
@@ -246,7 +249,7 @@ namespace Deadzone.UI
 
         private void DrawEndModal(string title, string subtitle, Color headerColor, int wave, int kills, int credits)
         {
-            float mW = 440, mH = 240, mX = (Screen.width - mW) * 0.5f, mY = (Screen.height - mH) * 0.5f;
+            float mW = 440, mH = 240, mX = (UIScale.W - mW) * 0.5f, mY = (UIScale.H - mH) * 0.5f;
             GUI.Box(new Rect(mX, mY, mW, mH), "");
             GUI.Box(new Rect(mX + 4, mY + 4, mW - 8, mH - 8), "");
             GUI.color = headerColor;

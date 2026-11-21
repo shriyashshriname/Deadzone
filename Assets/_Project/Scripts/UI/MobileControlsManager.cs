@@ -20,6 +20,7 @@ namespace Deadzone.UI
         private float moveRadius, aimRadius, btnRadius, fireRadius, contextRadius;
         private Vector2 fireCenter, dashCenter, reloadCenter, swapCenter, grenadeCenter, turretCenter, contextCenter;
         private bool hasInteractableTarget, isFireHeld, isContextHeld;
+        private WeaponPickup nearbyPickup; // shown as a tap PICK UP button when no hold-interaction is available
         private float currentInteractionProgress;
         private string interactActionName = "USE";
 
@@ -70,6 +71,7 @@ namespace Deadzone.UI
 
         private void RecalculateLayout()
         {
+            if (Screen.height > Screen.width) { RecalculatePortraitLayout(); return; }
             float w = Screen.width, h = Screen.height;
             moveRadius = h * 0.14f; aimRadius = h * 0.14f;
             btnRadius = h * 0.056f; fireRadius = h * 0.075f; contextRadius = h * 0.065f;
@@ -86,6 +88,33 @@ namespace Deadzone.UI
             grenadeCenter = new Vector2(w - h * 0.33f, h * 0.42f);
             turretCenter = new Vector2(w - h * 0.45f, h * 0.50f);
             contextCenter = new Vector2(w - h * 0.25f, h * 0.24f);
+        }
+
+        /// <summary>
+        /// Portrait (the game's default orientation since Build #8). Everything is sized from the short side and
+        /// kept inside the safe area: sticks low in each corner, action buttons in an arc above the aim stick,
+        /// context / PICK UP above the move stick. Leaves the bottom strip free for the loadout bar.
+        /// </summary>
+        private void RecalculatePortraitLayout()
+        {
+            Rect safe = Screen.safeArea;
+            float left = safe.xMin, right = safe.xMax, bottom = Screen.height - safe.yMin; // y grows downward here
+            float s = Mathf.Min(safe.width, safe.height);
+            moveRadius = s * 0.15f; aimRadius = s * 0.15f;
+            btnRadius = s * 0.062f; fireRadius = s * 0.085f; contextRadius = s * 0.075f;
+
+            defaultMoveBase = new Vector2(left + s * 0.25f, bottom - s * 0.36f);
+            defaultAimBase = new Vector2(right - s * 0.25f, bottom - s * 0.36f);
+            if (moveFingerId == -1) moveKnobPos = defaultMoveBase;
+            if (aimFingerId == -1) aimKnobPos = defaultAimBase;
+
+            reloadCenter = new Vector2(right - s * 0.08f, bottom - s * 0.62f);
+            swapCenter = new Vector2(right - s * 0.25f, bottom - s * 0.67f);
+            grenadeCenter = new Vector2(right - s * 0.42f, bottom - s * 0.64f);
+            turretCenter = new Vector2(right - s * 0.46f, bottom - s * 0.46f);
+            dashCenter = new Vector2(right - s * 0.07f, bottom - s * 0.13f);
+            fireCenter = new Vector2(right - s * 0.25f, bottom - s * 0.86f);
+            contextCenter = new Vector2(left + s * 0.25f, bottom - s * 0.66f);
         }
 
         private void Update()
@@ -107,6 +136,7 @@ namespace Deadzone.UI
 
             RecalculateLayout();
             hasInteractableTarget = MobileContextScanner.Poll(player, out currentInteractionProgress, out interactActionName);
+            nearbyPickup = !hasInteractableTarget && player != null ? WeaponPickup.NearestReady(player.transform.position) : null;
             ProcessTouchInput();
         }
 
@@ -159,6 +189,7 @@ namespace Deadzone.UI
             if (Vector2.Distance(p, grenadeCenter) <= btnRadius) { touchProvider.GrenadeTriggered = true; return; }
             if (Vector2.Distance(p, turretCenter) <= btnRadius) { touchProvider.TurretTriggered = true; return; }
             if (hasInteractableTarget && Vector2.Distance(p, contextCenter) <= contextRadius) return;
+            if (nearbyPickup != null && Vector2.Distance(p, contextCenter) <= contextRadius) { touchProvider.PickupTriggered = true; return; }
             if (shootingMode == TouchShootingMode.ModeB_AimAndFire && Vector2.Distance(p, fireCenter) <= fireRadius) return;
 
             // Fixed base: only activate if touching near the designated corner bases!
@@ -226,6 +257,7 @@ namespace Deadzone.UI
 
         private void OnGUI()
         {
+            GUI.matrix = Matrix4x4.identity; // raw-pixel layout (HUD panels use UIScale)
             if (Application.isEditor)
             {
                 string toggleText = ForceMobileInEditor ? "VIEW: MOBILE UI [ON]" : "VIEW: DESKTOP PC";
@@ -247,12 +279,14 @@ namespace Deadzone.UI
             MobileControlsDrawer.DrawCircle(moveKnobPos, moveRadius * 0.40f, new Color(0.3f, 0.9f, 1f, 0.85f));
 
             // Right Aim Joystick (Fixed at bottom-right corner)
-            bool isFiring = touchProvider != null && touchProvider.AimJoystickVector.magnitude >= 0.20f;
+            bool sniperAiming = player != null && player.IsPrecisionAiming;
+            bool isFiring = !sniperAiming && touchProvider != null && touchProvider.AimJoystickVector.magnitude >= 0.20f;
             Color aimRingColor = isFiring ? new Color(1f, 0.35f, 0.1f, 0.95f) : new Color(0.9f, 0.7f, 0.2f, 0.55f);
             Color aimKnobColor = isFiring ? new Color(1f, 0.35f, 0.1f, 0.95f) : new Color(0.9f, 0.75f, 0.25f, 0.85f);
             MobileControlsDrawer.DrawCircle(defaultAimBase, aimRadius, new Color(0.06f, 0.10f, 0.16f, 0.65f));
             MobileControlsDrawer.DrawRing(defaultAimBase, aimRadius, aimRingColor);
             MobileControlsDrawer.DrawCircle(aimKnobPos, aimRadius * 0.40f, aimKnobColor);
+            if (sniperAiming) MobileControlsDrawer.DrawRing(defaultAimBase, aimRadius * 1.08f, new Color(1f, 1f, 1f, 0.9f)); // release to fire
 
             if (shootingMode == TouchShootingMode.ModeB_AimAndFire)
             {
@@ -279,6 +313,12 @@ namespace Deadzone.UI
             {
                 string ctxText = $"HOLD\n{interactActionName}\n{(currentInteractionProgress * 100):F0}%";
                 MobileControlsDrawer.DrawButton(contextCenter, contextRadius, new Color(0.2f, 1f, 0.4f, 0.95f), ctxText, isContextHeld);
+            }
+            else if (nearbyPickup != null && nearbyPickup.Data != null)
+            {
+                Color rc = Deadzone.Data.WeaponData.RarityColor(nearbyPickup.Data.rarity);
+                MobileControlsDrawer.DrawButton(contextCenter, contextRadius, new Color(rc.r, rc.g, rc.b, 0.95f),
+                    $"PICK UP\n{nearbyPickup.Data.weaponName.ToUpper()}", false);
             }
         }
     }

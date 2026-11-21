@@ -137,6 +137,7 @@ namespace Deadzone.Combat
 
         private void OnGUI()
         {
+            GUI.matrix = Matrix4x4.identity; // raw screen pixels (world-anchored / safe-area aware)
             if (isClaimed || !IsPlayerInRange) return;
 
             float w = 320, h = 48;

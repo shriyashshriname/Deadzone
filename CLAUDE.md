@@ -30,3 +30,13 @@ Plan and decisions: `Docs/ROADMAP_NEXT.md` (milestones M1→M5), `Docs/DECISION_
 - Renderer must keep `postProcessData` assigned (it was null = no post at all until Build #7) and Forward+
   (the floor is one 120 m mesh; plain Forward's per-object light limit hid most lamp pools).
 - PlaySim facing check uses the 3-sample sustained angle; raw single-frame spikes to ~180° are normal turns.
+- NEVER edit project files while a batchmode Unity run is going: it recompiles mid-play, statics reset
+  (WaveManager/PlayerRevive Instances = null) and the sim "stalls" for no game reason.
+- Portrait is the shipping orientation (Build #8+, locked in BuildScript). HUD panels use `UI/UIScale`
+  (480-unit short side, safe area); raw-pixel OnGUI (touch sticks, world labels) resets GUI.matrix itself.
+  Touch layout: `MobileControlsManager.RecalculatePortraitLayout`. Camera: TopDownCamera portrait framing.
+- Weapon pickup is manual (PICK UP / E); sniper = hold to aim (PrecisionAimLine), release to fire.
+  PlaySim runs a scripted mechanics test for both. Scripted InputCommand must set selectSlot = -1
+  (0 means "select slot 1" every frame).
+- Check the real screen (IMGUI HUD isn't in camera renders): `BuildScript.BuildWindowsCapture`, then
+  `Builds/WindowsCapture/Deadzone.exe -screen-width 540 -screen-height 1200 -screen-fullscreen 0 -dzshots <dir>`.

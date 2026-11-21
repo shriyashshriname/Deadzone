@@ -87,6 +87,7 @@ namespace Deadzone.Editor
             });
             MakeAdditiveParticleMat($"{FxDir}/M_RainStreak.mat", streakTex);
             MakeAdditiveParticleMat($"{FxDir}/M_RainSplash.mat", splashTex);
+            MakeAdditiveParticleMat($"{FxDir}/M_AimLine.mat", null); // sniper range-finder line (vertex-coloured)
         }
 
         static Texture2D WriteTexture(string path, int w, int h, System.Func<float, float, float> alpha)

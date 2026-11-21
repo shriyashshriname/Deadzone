@@ -169,6 +169,7 @@ namespace Deadzone.Combat
 
         private void OnGUI()
         {
+            GUI.matrix = Matrix4x4.identity; // raw screen pixels (world-anchored / safe-area aware)
             if (health.IsDead || !mainCam) return;
 
             Vector3 headPos = transform.position + Vector3.up * 1.8f;

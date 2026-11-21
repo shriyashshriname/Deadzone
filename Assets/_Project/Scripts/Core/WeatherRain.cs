@@ -68,7 +68,7 @@ namespace Deadzone.Core
         {
             var go = new GameObject("RainStreaks");
             go.transform.SetParent(parent, false);
-            go.transform.localPosition = new Vector3(0f, 13f, 2f);
+            go.transform.localPosition = new Vector3(0f, 13f, 6f); // portrait view reaches further ahead than behind
             // Emit along local +Z; tilt so rain falls mostly down with a little wind.
             go.transform.localRotation = Quaternion.Euler(82f, 12f, 0f);
             var ps = go.AddComponent<ParticleSystem>();
@@ -81,16 +81,16 @@ namespace Deadzone.Core
             main.startSpeed = new ParticleSystem.MinMaxCurve(20f, 25f);
             main.startSize = new ParticleSystem.MinMaxCurve(0.025f, 0.045f);
             main.startColor = new Color(0.72f, 0.80f, 0.95f, 0.38f);
-            main.maxParticles = 800;
+            main.maxParticles = 950;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.prewarm = true;
 
             var em = ps.emission;
-            em.rateOverTime = 1100f;
+            em.rateOverTime = 1250f;
 
             var shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
-            shape.scale = new Vector3(40f, 34f, 0.5f);
+            shape.scale = new Vector3(34f, 46f, 0.5f);
 
             var r = go.GetComponent<ParticleSystemRenderer>();
             r.renderMode = ParticleSystemRenderMode.Stretch;
@@ -107,7 +107,7 @@ namespace Deadzone.Core
         {
             var go = new GameObject("RainSplashes");
             go.transform.SetParent(parent, false);
-            go.transform.localPosition = new Vector3(0f, 0.04f, 2f);
+            go.transform.localPosition = new Vector3(0f, 0.04f, 4f);
             go.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
             var ps = go.AddComponent<ParticleSystem>();
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -127,7 +127,7 @@ namespace Deadzone.Core
 
             var shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
-            shape.scale = new Vector3(30f, 24f, 0.01f);
+            shape.scale = new Vector3(22f, 32f, 0.01f);
 
             var size = ps.sizeOverLifetime;
             size.enabled = true;

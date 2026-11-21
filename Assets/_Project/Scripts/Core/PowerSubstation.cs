@@ -113,6 +113,7 @@ namespace Deadzone.Core
 
         private void OnGUI()
         {
+            GUI.matrix = Matrix4x4.identity; // raw screen pixels (world-anchored / safe-area aware)
             if (isOnline || !IsPlayerInRange) return;
 
             float w = 340, h = 50;

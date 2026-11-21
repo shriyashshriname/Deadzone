@@ -31,6 +31,7 @@ namespace Deadzone.Player
         public bool ContextInteractHeld { get; set; }
         public bool ReloadTriggered { get; set; }
         public bool SwitchWeaponTriggered { get; set; }
+        public bool PickupTriggered { get; set; }
         public int DirectSlotSelected { get; set; } = -1;
 
         public MobileTouchInputProvider(Transform player)
@@ -101,6 +102,9 @@ namespace Deadzone.Player
 
             cmd.interact = ContextInteractHeld;
 
+            cmd.pickup = PickupTriggered;
+            PickupTriggered = false;
+
             return cmd;
         }
 
@@ -132,8 +136,11 @@ namespace Deadzone.Player
 
             if (foundTarget)
             {
-                // Softly nudge aim vector by at most 30% toward target (smooth assist, no instant snap)
-                return Vector3.Slerp(currentAim, bestTargetDir, 0.30f).normalized;
+                // Softly nudge aim vector toward the target (no instant snap). Precision weapons get a firmer
+                // pull: one slow, high-damage shot is much harsher to miss on a touch stick.
+                var w = PlayerController.Instance != null ? PlayerController.Instance.EquippedWeapon : null;
+                float pull = w != null && PlayerController.IsPrecision(w.Data) ? 0.6f : 0.30f;
+                return Vector3.Slerp(currentAim, bestTargetDir, pull).normalized;
             }
 
             return currentAim;

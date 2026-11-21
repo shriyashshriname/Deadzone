@@ -151,6 +151,7 @@ namespace Deadzone.Player
 
         private void OnGUI()
         {
+            GUI.matrix = Matrix4x4.identity; // raw screen pixels (world-anchored / safe-area aware)
             if (!isDowned) return;
 
             float w = 360, h = 55;

@@ -25,11 +25,12 @@ namespace Deadzone.UI
             if (bag == null) return;
             if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Playing) return;
 
-            float scale = Mathf.Clamp(Screen.height / 720f, 0.8f, 1.8f);
+            UIScale.Begin();
+            float scale = 1f; // UIScale handles device resolution
             float tile = 46f * scale, gap = 5f * scale;
             int cap = bag.Capacity;
             float w = cap * tile + (cap - 1) * gap;
-            float x0 = (Screen.width - w) * 0.5f, y0 = 76f * scale;
+            float x0 = (UIScale.W - w) * 0.5f, y0 = UIScale.Portrait ? 182f : 76f;
 
             if (tileStyle == null)
             {
